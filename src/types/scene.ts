@@ -18,11 +18,18 @@ export interface MainSceneProgress {
   message?: string;
 }
 
+export interface GrippableObject {
+  name: string;
+  position: { x: number; y: number; z: number };
+  mesh: THREE.Object3D;
+}
+
 export interface MainSceneHandle {
   switchRobot: (key: RobotKey) => Promise<void>;
   dispose: () => void;
   getActiveRobot: () => SO101 | LeKiwi | null;
   getActiveRobotKey: () => RobotKey;
+  getGrippableObjects: () => GrippableObject[];
   camera: THREE.Camera;
   controls: OrbitControls;
 }

@@ -1,11 +1,11 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react';
 import { Settings } from 'lucide-react';
-import { PlanarControl, MIN_GRIPPER_ANGLE_PHYSICAL, MAX_GRIPPER_ANGLE_PHYSICAL } from '../planar';
+import { PlanarControl, MIN_GRIPPER_ANGLE_PHYSICAL, MAX_GRIPPER_ANGLE_PHYSICAL, MIN_WRIST_FLEX_ANGLE, MAX_WRIST_FLEX_ANGLE } from '../planar';
 import { MovementControl, RotationControl, RemoteControl } from './index';
 import { RobotConnection } from './RobotConnection';
 import { Robot } from '../robots/Robot';
-import type { RobotKey, MainSceneHandle } from '../types/scene';
+import type { RobotKey, MainSceneHandle, GrippableObject } from '../types/scene';
 import { inverseKinematics2Link } from '../utils/inverseKinematics';
 
 interface ControlPanelProps {
@@ -28,8 +28,6 @@ interface PlanarControlSectionProps {
 }
 
 const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle, robotConnection }) => {
-  const planarControlRef = useRef<PlanarControl | null>(null);
-  
   // Helper function to sync virtual robot state to physical robot
   const syncToPhysicalRobot = async () => {
     const teleoperator = robotConnection?.getRobotTeleoperator();
@@ -94,8 +92,8 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
           
           // Map circleSize to reach distance X (horizontal distance from base)
           // Using configured Z range
-          const zMin = planarControlRef.current?.zRangeMin ?? 0;
-          const zMax = planarControlRef.current?.zRangeMax ?? 10;
+          const zMin = control.zRangeMin ?? 0;
+          const zMax = control.zRangeMax ?? 10;
           const normalizedReach = (circleSize - zMin) / (zMax - zMin);
           const targetZ = normalizedReach * 2; // 0 to 2 units reach
           
@@ -183,47 +181,106 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
         
         syncToPhysicalRobot();
       },
-      onWristRollChange: (angleDegrees) => {
-        const robot = sceneHandle?.getActiveRobot();
-        if (!robot) return;
-        
-        const wristFlexPivot = robot.pivotMap['wrist_flex'];
-        if (wristFlexPivot) {
-          // Map angle to wrist_flex range
-          // Normalize the angle to a reasonable range (e.g., -90 to 90 degrees maps to full range)
-          const normalized = (angleDegrees + 90) / 180; // Map -90 to 90 degrees to 0 to 1
-          const clampedNormalized = Math.max(0, Math.min(1, normalized));
-          const wristFlexValue = wristFlexPivot.lower + clampedNormalized * (wristFlexPivot.upper - wristFlexPivot.lower);
-          robot.setPivotValue('wrist_flex', -90);
-        }
-        
-        syncToPhysicalRobot();
-      },
       onWristFlexChange: (angleDegrees) => {
         const robot = sceneHandle?.getActiveRobot();
         if (!robot) return;
         
         const wristFlexPivot = robot.pivotMap['wrist_flex'];
         if (wristFlexPivot) {
-          // Map angle directly to wrist_flex range
-          // Normalize the angle to a reasonable range (e.g., -180 to 180 degrees maps to full range)
-          const normalized = (angleDegrees + 180) / 360; // Map -180 to 180 degrees to 0 to 1
-          const clampedNormalized = Math.max(0, Math.min(1, normalized));
-          const wristFlexValue = wristFlexPivot.lower + clampedNormalized * (wristFlexPivot.upper - wristFlexPivot.lower);
-          robot.setPivotValue('wrist_flex', wristFlexValue);
+          let usedAngle = angleDegrees;
+          let normalizedAngle = 1 - ((usedAngle - MIN_WRIST_FLEX_ANGLE)/(MAX_WRIST_FLEX_ANGLE - MIN_WRIST_FLEX_ANGLE));
+          let pivotValue = wristFlexPivot.lower + normalizedAngle * (wristFlexPivot.upper - wristFlexPivot.lower);
+          robot.setPivotValue('wrist_flex', pivotValue);
         }
         
         syncToPhysicalRobot();
       },
     });
     
-    planarControlRef.current = control;
     return control;
   }, [sceneHandle, syncToPhysicalRobot]);
 
   const PlanarControls = useMemo(() => planarControl.renderControls(), [planarControl]);
 
-  return <PlanarControls />;
+  const handleMoveAboveObject = (objectName: string) => {
+    if (!sceneHandle) return;
+    
+    const robot = sceneHandle.getActiveRobot();
+    if (!robot || !robot.robot) return;
+    
+    const objects = sceneHandle.getGrippableObjects();
+    const targetObject = objects.find(obj => obj.name === objectName);
+    if (!targetObject) return;
+    
+    // Get robot base position
+    const robotPos = robot.robot.position;
+    
+    // Calculate relative position from robot to object
+    const dx = targetObject.position.x - robotPos.x;
+    const dz = targetObject.position.z - robotPos.z;
+    const dy = targetObject.position.y - robotPos.y;
+    
+    // Calculate horizontal distance (reach)
+    const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+    
+    // Calculate angle for shoulder_pan (base rotation)
+    // atan2(dz, dx) gives us the angle in robot's local XZ plane
+    const angleToObject = Math.atan2(dz, dx);
+    
+    // Convert to planar control coordinates
+    // X maps to theta (0 to PI becomes -1 to 1)
+    const theta = angleToObject + Math.PI / 2; // Adjust based on robot orientation
+    const normalizedX = 1 - (theta / Math.PI); // Map 0 to PI -> 1 to -1
+    
+    // Y maps to height (-1 to 1)
+    // Assuming a reasonable height range of 0 to 2 units
+    const normalizedY = (dy - 1) / 1; // Adjust based on testing
+    
+    // Z maps to reach distance
+    // Use the planar control's Z range
+    const zMin = planarControl.zRangeMin;
+    const zMax = planarControl.zRangeMax;
+    const normalizedZ = zMin + (horizontalDistance / 2) * (zMax - zMin);
+    
+    // Check if reachable (simple bounds check)
+    const maxReach = 2; // Approximate max reach in units
+    if (horizontalDistance > maxReach) {
+      alert(`Object "${objectName}" is too far away (${horizontalDistance.toFixed(2)}m). Max reach: ${maxReach}m`);
+      return;
+    }
+    
+    // Set the target
+    planarControl.setTarget(normalizedX, normalizedY, normalizedZ);
+    console.log(`Moving arm above "${objectName}"`, {
+      objectPosition: targetObject.position,
+      robotPosition: { x: robotPos.x, y: robotPos.y, z: robotPos.z },
+      relative: { dx, dy, dz },
+      horizontalDistance,
+      target: { x: normalizedX, y: normalizedY, z: normalizedZ }
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <PlanarControls />
+      
+      {/* Move Above Object Section */}
+      <div className="border-t border-gray-300 pt-3">
+        <h4 className="text-sm font-semibold mb-2">Move Above Object</h4>
+        <div className="flex flex-col gap-1">
+          {sceneHandle?.getGrippableObjects().map(obj => (
+            <button
+              key={obj.name}
+              onClick={() => handleMoveAboveObject(obj.name)}
+              className="px-3 py-1.5 text-xs bg-blue-100 hover:bg-blue-200 rounded transition-colors text-left"
+            >
+              {obj.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export const ControlPanel : React.FC<ControlPanelProps> = ({

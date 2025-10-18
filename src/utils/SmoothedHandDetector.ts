@@ -51,6 +51,7 @@ export class SmoothedHandDetector {
     const smoothedHand = { ...hand };
 
     // Smooth 2D keypoints
+    // Note: keypoints (2D) represent x, y positions in image pixel space
     if (hand.keypoints) {
       smoothedHand.keypoints = hand.keypoints.map((keypoint) => {
         const bufferId = `2d_${keypoint.name}`;
@@ -64,6 +65,9 @@ export class SmoothedHandDetector {
     }
 
     // Smooth 3D keypoints
+    // Note: keypoints3D represent x, y, z in metric space (absolute distance)
+    // The origin is formed as an average between the first knuckles of index, middle, ring and pinky fingers
+    // These coordinates CANNOT be mixed with 2D pixel coordinates
     if (hand.keypoints3D) {
       smoothedHand.keypoints3D = hand.keypoints3D.map((keypoint) => {
         const bufferId = `3d_${keypoint.name}`;

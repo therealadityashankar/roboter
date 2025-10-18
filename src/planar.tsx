@@ -43,7 +43,6 @@ const THUMB_TIP_KEYPOINT = 'thumb_tip';
 const RING_FINGER_KEYPOINT = 'ring_finger_tip';
 const WRIST_KEYPOINT = 'wrist';
 const MIDDLE_FINGER_MCP_KEYPOINT = 'middle_finger_mcp';
-const PINKY_TIP_KEYPOINT = 'pinky_finger_tip';
 const RING_FINGER_TIP_KEYPOINT = 'ring_finger_tip';
 const GRIPPER_STEP_DEGREES = 1;
 
@@ -54,10 +53,12 @@ export const MAX_GRIPPER_ANGLE_PHYSICAL = -60;
 const MIN_GRIPPER_MOUTH_DEGREES = 0;
 const MAX_GRIPPER_MOUTH_DEGREES = 120;
 const GRIPPER_MOUTH_STEP_DEGREES = 1;
-
-const MIN_WRIST_FLEX_DEGREES = -180;
-const MAX_WRIST_FLEX_DEGREES = 180;
 const WRIST_FLEX_STEP_DEGREES = 1;
+
+// Physical comfort range for wrist flex angle (y-z plane)
+// Angle is normalized to 0-360° range to avoid discontinuity
+export const MIN_WRIST_FLEX_ANGLE = 130;
+export const MAX_WRIST_FLEX_ANGLE = 230;
 
 /**
  * PlanarControl class - manages planar position control with optional hand tracking
@@ -78,12 +79,7 @@ export class PlanarControl {
   private videoElement: HTMLVideoElement | null = null;
   
   // Hand keypoints for visualization
-  public handKeypoints: { thumb?: any; index?: any; ring?: any; thumbTip?: any; wrist?: any; middleFingerMcp?: any; pinkyTip?: any; ringFingerTip?: any } = {};
-  
-  // Wrist flex rotation state (for pinky-thumb touch rotation)
-  private wristFlexBaseAngle: number = 0;
-  private pinkyThumbTouching: boolean = false;
-  private touchStartAngle: number = 0;
+  public handKeypoints: { thumb?: any; index?: any; ring?: any; thumbTip?: any; wrist?: any; middleFingerMcp?: any; ringFingerTip?: any } = {};
   
   // Raw hand tracking position for display
   public handTrackedPosition: { x: number; y: number; z: number } | null = null;
@@ -148,6 +144,31 @@ export class PlanarControl {
     this.emitChange();
   }
 
+  /**
+   * Set target position for inverse kinematics (X, Y, Z all at once)
+   * @param x Normalized X position (-1 to 1)
+   * @param y Normalized Y position (-1 to 1)
+   * @param z Circle size / reach distance (MIN_CIRCLE_REM to MAX_CIRCLE_REM)
+   */
+  setTarget(x: number, y: number, z: number) {
+    this.position.x = clampUnitRange(x);
+    this.position.y = clampUnitRange(y);
+    this.z = clampRange(z, MIN_CIRCLE_REM, MAX_CIRCLE_REM);
+    this.emitChange();
+  }
+
+  /**
+   * Get current target position (X, Y, Z)
+   * @returns {x: number, y: number, z: number} where x,y are -1 to 1, z is MIN_CIRCLE_REM to MAX_CIRCLE_REM
+   */
+  getTarget() {
+    return {
+      x: this.position.x,
+      y: this.position.y,
+      z: this.z
+    };
+  }
+
   getGripperAngle(): number {
     return this.gripperAngleDegrees;
   }
@@ -181,11 +202,9 @@ export class PlanarControl {
   setWristFlexAngle(angleDegrees: number) {
     this.wristFlexAngleDegrees = clampRange(
       angleDegrees,
-      MIN_WRIST_FLEX_DEGREES,
-      MAX_WRIST_FLEX_DEGREES
+      MIN_WRIST_FLEX_ANGLE,
+      MAX_WRIST_FLEX_ANGLE
     );
-    // Update base angle so pinky-thumb rotation continues from this position
-    this.wristFlexBaseAngle = this.wristFlexAngleDegrees;
     this.options.onWristFlexChange?.(this.wristFlexAngleDegrees);
   }
 
@@ -268,9 +287,6 @@ export class PlanarControl {
         const middleFingerMcp2D = hand.keypoints?.find(
           (keypoint) => keypoint.name === MIDDLE_FINGER_MCP_KEYPOINT
         );
-        const pinkyTip2D = hand.keypoints?.find(
-          (keypoint) => keypoint.name === PINKY_TIP_KEYPOINT
-        );
         const ringFingerTip2D = hand.keypoints?.find(
           (keypoint) => keypoint.name === RING_FINGER_TIP_KEYPOINT
         );
@@ -296,15 +312,18 @@ export class PlanarControl {
           x: this.videoElement.videoWidth - middleFingerMcp2D.x
         } : middleFingerMcp2D;
 
-        const pinkyTipCorrected = pinkyTip2D && this.videoElement ? {
-          ...pinkyTip2D,
-          x: this.videoElement.videoWidth - pinkyTip2D.x
-        } : pinkyTip2D;
-
         const ringFingerTipCorrected = ringFingerTip2D && this.videoElement ? {
           ...ringFingerTip2D,
           x: this.videoElement.videoWidth - ringFingerTip2D.x
         } : ringFingerTip2D;
+
+        // Extract 3D keypoints for z-coordinate information
+        const wrist3D = hand.keypoints3D?.find(
+          (keypoint) => keypoint.name === WRIST_KEYPOINT
+        );
+        const middleFingerMcp3D = hand.keypoints3D?.find(
+          (keypoint) => keypoint.name === MIDDLE_FINGER_MCP_KEYPOINT
+        );
 
         // Calculate wrist roll angle (angle between wrist and middle finger MCP across Z-axis)
         let wristRollAngle = 0;
@@ -312,6 +331,21 @@ export class PlanarControl {
           const dx = middleFingerMcpCorrected.x - wristCorrected.x;
           const dy = middleFingerMcpCorrected.y - wristCorrected.y;
           wristRollAngle = Math.atan2(dy, dx) * (180 / Math.PI); // Convert to degrees
+        }
+
+        // Calculate wrist flex angle (y-z angle between wrist and middle finger MCP using 3D keypoints)
+        // Note: Using only 3D keypoints which are in metric space, NOT mixing with 2D pixel coordinates
+        if (wrist3D && middleFingerMcp3D && wrist3D.y !== undefined && wrist3D.z !== undefined && middleFingerMcp3D.y !== undefined && middleFingerMcp3D.z !== undefined) {          
+          const dy = middleFingerMcp3D.y - wrist3D.y;
+          const dz = middleFingerMcp3D.z - wrist3D.z;
+          const wristFlexYZAngle = Math.atan2(dz, dy) * (180 / Math.PI); // Convert to degrees (-180 to 180)
+          
+          // Normalize to 0-360 range to avoid discontinuity at -180/180 boundary
+          const normalizedAngle = (wristFlexYZAngle + 360) % 360;
+
+          // Clamp and emit wrist flex angle
+          const clampedAngle = clampRange(normalizedAngle, MIN_WRIST_FLEX_ANGLE, MAX_WRIST_FLEX_ANGLE);
+          this.setWristFlexAngle(clampedAngle)
         }
 
         // Store keypoints for visualization
@@ -322,47 +356,11 @@ export class PlanarControl {
           thumbTip: thumbTipCorrected,
           wrist: wristCorrected,
           middleFingerMcp: middleFingerMcpCorrected,
-          pinkyTip: pinkyTipCorrected,
           ringFingerTip: ringFingerTipCorrected,
         };
 
         // Emit wrist roll angle change
         this.options.onWristRollChange?.(wristRollAngle);
-
-        // Wrist flex rotation control via pinky-thumb touch
-        if (thumbTipCorrected && pinkyTipCorrected) {
-          const dx = pinkyTipCorrected.x - thumbTipCorrected.x;
-          const dy = pinkyTipCorrected.y - thumbTipCorrected.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          const currentAngle = Math.atan2(dy, dx) * (180 / Math.PI);
-          
-          const touchThreshold = 40; // pixels - adjust based on testing
-          
-          // Check if pinky and thumb are touching
-          if (distance < touchThreshold) {
-            if (!this.pinkyThumbTouching) {
-              // Touch just started
-              this.pinkyThumbTouching = true;
-              this.touchStartAngle = currentAngle;
-            } else {
-              // Touch is ongoing - calculate rotation delta
-              const angleDelta = currentAngle - this.touchStartAngle;
-              const wristFlexAngle = this.wristFlexBaseAngle + angleDelta;
-              this.wristFlexAngleDegrees = clampRange(
-                wristFlexAngle,
-                MIN_WRIST_FLEX_DEGREES,
-                MAX_WRIST_FLEX_DEGREES
-              );
-              this.options.onWristFlexChange?.(this.wristFlexAngleDegrees);
-            }
-          } else {
-            if (this.pinkyThumbTouching) {
-              // Touch just released - retain the angle
-              this.wristFlexBaseAngle = this.wristFlexAngleDegrees;
-              this.pinkyThumbTouching = false;
-            }
-          }
-        }
 
         // Position tracking using index finger
         if (
@@ -418,11 +416,12 @@ export class PlanarControl {
           // Map distance to circle size
           // Larger distance = hand is closer to camera = larger circle size
           // Smaller distance = hand is farther from camera = smaller circle size
-          // Typical distance range might be 50-200 pixels (adjust based on testing)
+          // Typical distance range might be 50-170 pixels (adjust based on testing)
           const minDistance = 50;  // Hand far away
-          const maxDistance = 200; // Hand close
+          const maxDistance = 150; // Hand close
           const normalizedDistance = clampRange((distance - minDistance) / (maxDistance - minDistance), 0, 1);
           const circleSize = MIN_CIRCLE_REM + normalizedDistance * (MAX_CIRCLE_REM - MIN_CIRCLE_REM);
+          console.log("normalized distance", normalizedDistance);
           this.setCircleSize(circleSize);
           
           // Update raw hand tracked position (Z as normalized distance)
@@ -548,7 +547,7 @@ export class PlanarControl {
       const [handTracking, setHandTracking] = useState(false);
       const [cameraButtonText, setCameraButtonText] = useState('Enable Hand Tracking');
       const [cameraButtonDisabled, setCameraButtonDisabled] = useState(false);
-      const [handKeypoints, setHandKeypoints] = useState<{ thumb?: any; index?: any; ring?: any; thumbTip?: any; wrist?: any; middleFingerMcp?: any; pinkyTip?: any; ringFingerTip?: any }>({});
+      const [handKeypoints, setHandKeypoints] = useState<{ thumb?: any; index?: any; ring?: any; thumbTip?: any; wrist?: any; middleFingerMcp?: any; ringFingerTip?: any }>({});
       const [showSettings, setShowSettings] = useState(false);
       const [showIKViz, setShowIKViz] = useState(false);
       
@@ -817,14 +816,6 @@ export class PlanarControl {
           ctx.fill();
         }
 
-        // Draw PINKY_TIP dot
-        if (handKeypoints.pinkyTip) {
-          ctx.fillStyle = '#14b8a6'; // teal
-          ctx.beginPath();
-          ctx.arc(handKeypoints.pinkyTip.x * scaleX, handKeypoints.pinkyTip.y * scaleY, 6, 0, 2 * Math.PI);
-          ctx.fill();
-        }
-
         // Draw theta value on canvas when hand tracking is active
         if (handTracking) {
           const thetaRadians = gripperAngle * (Math.PI / 180);
@@ -844,9 +835,7 @@ export class PlanarControl {
       // position.x and position.y are already in -1 to +1 range representing full control area
       const xPercent = ((position.x + 1) / 2) * 100;
       const yPercent = ((position.y + 1) / 2) * 100;
- 
-      console.log('xPercent', xPercent);
-      console.log('yPercent', yPercent);
+
 
       // Linear slider handlers for circle size
       const sliderRef = useRef<HTMLDivElement>(null);
@@ -1001,14 +990,16 @@ export class PlanarControl {
                 onPointerCancel={handlePointerEnd}
               />
 
-              {/* Linear Slider for Circle Size - fixed size, positioned below the circle */}
+                {/* Linear Slider for Circle Size - positioned below or above the circle based on y position */}
               <div
-                className="absolute pointer-events-auto flex flex-col items-center gap-1"
+                className={`absolute pointer-events-auto flex items-center gap-1 ${position.y < 0 ? 'flex-col-reverse' : 'flex-col'}`}
                 style={{
                   zIndex: 3,
                   left: `${xPercent}%`,
                   top: `${yPercent}%`,
-                  transform: `translate(-50%, calc(${circleSize / 2}rem + 16px))`,
+                  transform: position.y > 0 
+                    ? `translate(-50%, calc(-${circleSize / 2}rem - 16px - 100%))` // Above circle
+                    : `translate(-50%, calc(${circleSize / 2}rem + 16px))`, // Below circle
                   width: '3.2rem', // Fixed width, slightly longer than max circle size
                 }}
               >
@@ -1235,12 +1226,12 @@ export class PlanarControl {
                 {/* Wrist Flex Slider */}
                 <div className="flex flex-col items-stretch gap-1">
                   <span className="text-[10px] font-medium text-gray-600 text-left">
-                    Wrist Flex: {wristFlexAngle.toFixed(2)}°
+                    Wrist Flex: {(((wristFlexAngle - MIN_WRIST_FLEX_ANGLE) / (MAX_WRIST_FLEX_ANGLE - MIN_WRIST_FLEX_ANGLE)) * 100).toFixed(2)}
                   </span>
                   <input
                     type="range"
-                    min={MIN_WRIST_FLEX_DEGREES}
-                    max={MAX_WRIST_FLEX_DEGREES}
+                    min={MIN_WRIST_FLEX_ANGLE}
+                    max={MAX_WRIST_FLEX_ANGLE}
                     step={WRIST_FLEX_STEP_DEGREES}
                     value={wristFlexAngle}
                     onChange={(e) => {

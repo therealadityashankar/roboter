@@ -21,3 +21,4 @@
     Imo this has an advantage of removing callback functions and making code a little bit cleaner
 
 3. Avoid try catch blocks
+4. Avoid using useCallback and useMemo, unless really necessary, think about if it is necessary

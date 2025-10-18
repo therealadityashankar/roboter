@@ -4,7 +4,7 @@ import { AmmoPhysics, PhysicsLoader } from '@enable3d/ammo-physics';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { SO101, LeKiwi } from './src';
 import { Robot } from './src/robots/Robot';
-import type { RobotKey, MainSceneHandle, MainSceneProgress, MainSceneStage } from './src/types/scene';
+import type { RobotKey, MainSceneHandle, MainSceneProgress, MainSceneStage, GrippableObject } from './src/types/scene';
 import { createGrassGrid } from './src/utils/createGrassGrid';
 import { loadAsset } from './src/utils/loadAsset';
 import { createTree } from './src/utils/createTree';
@@ -24,7 +24,7 @@ export interface MainSceneOptions {
   debugHoldLoading?: boolean;
 }
 
-export type { RobotKey, MainSceneHandle };
+export type { RobotKey, MainSceneHandle, GrippableObject } from './src/types/scene';
 
 let physicsLoaderPromise: Promise<void> | null = null;
 
@@ -351,6 +351,13 @@ export const createMainScene = async ({
     bunClonePromise,
   ]);
 
+  // Track grippable objects with their names
+  const grippableObjects = [
+    { name: 'Burger bun', mesh: bun },
+    { name: 'Burger patty', mesh: patty },
+    { name: 'Burger bun (clone)', mesh: bunClone },
+  ];
+
   table.addObjectAbove(bun, {
     deltaY: 5,
     physicsOptions: { shape: 'box' }
@@ -582,11 +589,24 @@ export const createMainScene = async ({
 
   const getActiveRobotKey = () => activeRobotKey;
 
+  const getGrippableObjects = () => {
+    return grippableObjects.map(obj => ({
+      name: obj.name,
+      position: {
+        x: obj.mesh.position.x,
+        y: obj.mesh.position.y,
+        z: obj.mesh.position.z,
+      },
+      mesh: obj.mesh,
+    }));
+  };
+
   return {
     switchRobot,
     dispose,
     getActiveRobot,
     getActiveRobotKey,
+    getGrippableObjects,
     camera,
     controls,
   };

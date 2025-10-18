@@ -182,7 +182,9 @@ export abstract class Robot extends THREE.Object3D {
   }
 
   async load(options: RobotLoaderOptions){
-    return this.loadModel(options)
+    const model = this.loadModel(options)
+    await Robot.waitTillAllMeshesLoaded(this.robot, this.modelPath)
+    return model
   }
 
    
@@ -259,31 +261,124 @@ export abstract class Robot extends THREE.Object3D {
     }
   }
 
-  static checkAndSetMeshColorWithBackoff(
+  /**
+   * Waits until all meshes from URDF are loaded into the robot
+   * @param robot - The URDFRobot instance
+   * @param urdfPath - Path to the URDF file
+   * @param maxWait - Maximum time to wait in milliseconds
+   * @param interval - Interval between checks in milliseconds
+   * @returns Promise<boolean> - true if all meshes loaded, false if timeout
+   */
+  static async waitTillAllMeshesLoaded(
+    robot: URDFRobot | null,
+    urdfPath: string,
+    maxWait: number = 3000,
+    interval: number = 100
+  ): Promise<boolean> {
+    const start = Date.now();
+    
+    while (Date.now() - start < maxWait) {
+      const allMeshesLoaded = await Robot.checkAllMeshesLoaded(robot, urdfPath);
+      if (allMeshesLoaded) {
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, interval));
+    }
+    
+    return false;
+  }
+
+  static async checkAndSetMeshColorWithBackoff(
     object: any,
     color: THREE.Color,
+    robot: URDFRobot | null,
+    urdfPath: string,
     maxWait: number = 3000,
     interval: number = 100
   ) {
-    const start = Date.now();
-  
-    const trySet = () => {
-      if (Robot.checkLinkHasMeshesRecursive(object)) {
-        Robot.setMeshColor(object, color);
-      } else if (Date.now() - start < maxWait) {
-        setTimeout(trySet, interval);
-      } else {
-        console.warn("Meshes not found within timeout, color not set.");
-      }
-    };
-  
-    trySet();
+    const loaded = await Robot.waitTillAllMeshesLoaded(robot, urdfPath, maxWait, interval);
+    
+    if (loaded) {
+      Robot.setMeshColor(object, color);
+    } else {
+      console.warn("Meshes not fully loaded within timeout, color not set.");
+    }
   } 
 
+  /**
+   * Parses URDF XML to find all mesh filenames referenced in the file
+   * @param urdfPath - Path to the URDF file
+   * @returns Array of mesh filenames (without path, just filename)
+   */
+  static async getMeshFilenamesFromURDF(urdfPath: string): Promise<string[]> {
+    const response = await fetch(urdfPath);
+    const urdfXml = await response.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(urdfXml, 'text/xml');
+    
+    const meshElements = xmlDoc.querySelectorAll('mesh');
+    const meshFilenames: Set<string> = new Set();
+    
+    meshElements.forEach(meshElement => {
+      const filename = meshElement.getAttribute('filename');
+      if (filename) {
+        // Extract just the filename from paths like "package://robot/meshes/file.dae"
+        // or "meshes/file.dae" or just "file.dae"
+        const parts = filename.split('/');
+        const file = parts[parts.length - 1];
+        meshFilenames.add(file);
+      }
+    });
+    
+    return [...meshFilenames];
+  }
+
+  /**
+   * Recursively counts all loaded meshes in the robot object tree
+   * @param object - The object to traverse
+   * @returns Total number of meshes
+   */
+  static collectTotalMeshes(object: any): number {
+    if (!object) return 0;
+    
+    let count = 0;
+    
+    if (object.isMesh) {
+      count++;
+    }
+    
+    for (const child of object.children ?? []) {
+      count += Robot.collectTotalMeshes(child);
+    }
+    
+    return count;
+  }
+
+  /**
+   * Checks if all meshes defined in the URDF have been loaded into the robot
+   * @param robot - The URDFRobot instance
+   * @param urdfPath - Path to the URDF file
+   * @returns Promise<boolean> - true if all meshes are loaded, false otherwise
+   */
+  static async checkAllMeshesLoaded(robot: URDFRobot | null, urdfPath: string): Promise<boolean> {
+    if (!robot) return false;
+    
+    const expectedMeshes = await Robot.getMeshFilenamesFromURDF(urdfPath);
+    const expectedMeshCount = expectedMeshes.length;
+    
+    const loadedMeshCount = Robot.collectTotalMeshes(robot);
+    
+    const allLoaded = loadedMeshCount >= expectedMeshCount;
+    return allLoaded;
+  }
+
+  /**
+   * Legacy function - checks if at least one mesh exists (kept for backwards compatibility)
+   */
   static checkLinkHasMeshesRecursive(object: any): boolean {
     if (!object) return false;
   
-    for (let child of object.children ?? []) {
+    for (const child of object.children ?? []) {
       if (child.isMesh) {
         return true;
       }
@@ -333,10 +428,10 @@ export abstract class Robot extends THREE.Object3D {
 
         if(physicsAndColor.color){
           // Attempts to set mesh colors with retry + timeout logic.
-          // Recursively checks if meshes exist on the object before applying the color.
+          // Checks if all meshes from URDF are loaded before applying the color.
           // Retries every 100ms (up to 3s by default) to handle async loading of meshes.
           // Falls back gracefully with a warning if meshes never appear.
-          Robot.checkAndSetMeshColorWithBackoff(link, physicsAndColor.color as THREE.Color);
+          Robot.checkAndSetMeshColorWithBackoff(link, physicsAndColor.color as THREE.Color, this.robot, this.modelPath);
         }
 
         enable3dObj.add.existing(link, {compound : [compoundBox]})

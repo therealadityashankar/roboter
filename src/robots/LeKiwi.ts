@@ -88,21 +88,27 @@ export class LeKiwi extends Robot {
       },
     }; 
 
+    // @ts-expect-error
     const jawParam = SO101.jawMesh.geometry.parameters
     const clonedJaw = LeKiwi.createCubeMesh([jawParam.width, jawParam.depth, jawParam.height], [SO101.jawMesh.position.x, SO101.jawMesh.position.y + 0.08, SO101.jawMesh.position.z - 0.05], [0, 0, 0]);
 
+    // @ts-expect-error
     const clonedWristMeshParams = SO101.wristMesh.geometry.parameters
     const clonedWristMesh = LeKiwi.createCubeMesh([clonedWristMeshParams.depth, clonedWristMeshParams.width, clonedWristMeshParams.height], [SO101.wristMesh.position.x - 0.04, SO101.wristMesh.position.y, SO101.wristMesh.position.z -0.05], [0, 0, 0]);
 
+    // @ts-expect-error
     const lowerArmParam = SO101.lowerArmMesh.geometry.parameters
     const clonedLowerArmMesh = LeKiwi.createCubeMesh([lowerArmParam.depth, lowerArmParam.width, lowerArmParam.height], [SO101.lowerArmMesh.position.x + 0.015, SO101.lowerArmMesh.position.y - 0.05, SO101.lowerArmMesh.position.z - 0.015], [0, 0, 0]);
 
+    // @ts-expect-error
     const upperArmParam = SO101.upperArmMesh.geometry.parameters
     const clonedUpperArmMesh = LeKiwi.createCubeMesh([upperArmParam.depth, upperArmParam.width, upperArmParam.height], [SO101.upperArmMesh.position.x + 0.015, SO101.upperArmMesh.position.y + 0.05, SO101.upperArmMesh.position.z - 0.015], [0, 0, 0]);
     
+    // @ts-expect-error
     const gripperParam = SO101.gripperMesh.geometry.parameters
     const clonedGripperMesh = LeKiwi.createCubeMesh([gripperParam.width, gripperParam.depth, gripperParam.height], [SO101.gripperMesh.position.x + 0.015, SO101.gripperMesh.position.y + 0.04, SO101.gripperMesh.position.z + 0.025], [0, 0, 0]);
     
+    // @ts-expect-error
     const shoulderParam = SO101.shoulderMesh.geometry.parameters
     const clonedShoulderMesh = LeKiwi.createCubeMesh([shoulderParam.width, shoulderParam.height, shoulderParam.depth], [SO101.shoulderMesh.position.x + 0.03, SO101.shoulderMesh.position.y - 0.03, SO101.shoulderMesh.position.z], [0, 0, 0]);
     // SO101 has the same links as LeKiwi, but with different names
