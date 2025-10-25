@@ -81,7 +81,12 @@ const App = () => {
       >
         <div className="mb-5">
           <h1 className="text-gray-800 text-center text-3xl quicksand mb-1">Die Roboter</h1>
-          <p className="text-gray-600 text-center text-sm quicksand">a video game for robots</p>
+          <div className="flex items-center justify-center gap-3">
+            <p className="text-gray-600 text-sm quicksand">a video game for robots</p>
+            <span className="text-xs font-bold text-gray-700 bg-yellow-100 border border-yellow-300 px-3 py-1 rounded quicksand">
+              Alpha Product - Work in Progress :)
+            </span>
+          </div>
         </div>
 
         <div className="relative w-full h-[calc(100vh-100px)]">

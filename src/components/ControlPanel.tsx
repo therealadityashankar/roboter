@@ -1,11 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react';
 import { Settings } from 'lucide-react';
+import { Chat } from './Chat';
 import { PlanarControl, MIN_GRIPPER_ANGLE_PHYSICAL, MAX_GRIPPER_ANGLE_PHYSICAL, MIN_WRIST_FLEX_ANGLE, MAX_WRIST_FLEX_ANGLE } from '../planar';
 import { MovementControl, RotationControl, RemoteControl } from './index';
 import { RobotConnection } from './RobotConnection';
 import { Robot } from '../robots/Robot';
-import type { RobotKey, MainSceneHandle, GrippableObject } from '../types/scene';
+import type { RobotKey, MainSceneHandle } from '../types/scene';
 import { inverseKinematics2Link } from '../utils/inverseKinematics';
 
 interface ControlPanelProps {
@@ -28,8 +29,13 @@ interface PlanarControlSectionProps {
 }
 
 const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle, robotConnection }) => {
+  const syncToPhysicalRobotRef = useRef<() => Promise<void>>(async () => {});
+
   // Helper function to sync virtual robot state to physical robot
   const syncToPhysicalRobot = async () => {
+    //if (currentlySyncing) return;
+    //currentlySyncing = true;
+
     const teleoperator = robotConnection?.getRobotTeleoperator();
     if (!teleoperator) return;
     
@@ -39,7 +45,7 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
     const motorPositions: { [key: string]: number } = {};
     
     // Map each joint to its corresponding motor
-    const jointNames = ['shoulder_pan']//, 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper'];
+    const jointNames = ['shoulder_pan', 'shoulder_lift']//, 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper'];
 
     const shoulderPanMotorConfig = teleoperator.motorConfigs.find((config : any) => config.name === 'shoulder_pan');
     const minPosition = shoulderPanMotorConfig?.minPosition;
@@ -61,7 +67,9 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
     await teleoperator.setMotorPositions(motorPositions);
     console.log('Sent to physical robot:', motorPositions);
   }
-  
+
+  syncToPhysicalRobotRef.current = syncToPhysicalRobot;
+
   const planarControl = useMemo(() => {
     const control = new PlanarControl({
       onChange: (position, theta, circleSize) => {
@@ -142,7 +150,7 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
           }
         }
         
-        syncToPhysicalRobot();
+        syncToPhysicalRobotRef.current();
       },
       onGripperAngleChange: (angle) => {
         const robot = sceneHandle?.getActiveRobot();
@@ -165,7 +173,7 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
           robot.setPivotValue('wrist_roll', pivotValue);
         }
         
-        syncToPhysicalRobot();
+        syncToPhysicalRobotRef.current();
       },
       onGripperMouthAngleChange: (angle) => {
         const robot = sceneHandle?.getActiveRobot();
@@ -179,7 +187,7 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
           robot.setPivotValue('gripper', gripperValue);
         }
         
-        syncToPhysicalRobot();
+        syncToPhysicalRobotRef.current();
       },
       onWristFlexChange: (angleDegrees) => {
         const robot = sceneHandle?.getActiveRobot();
@@ -193,12 +201,82 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
           robot.setPivotValue('wrist_flex', pivotValue);
         }
         
-        syncToPhysicalRobot();
+        syncToPhysicalRobotRef.current();
       },
     });
     
     return control;
-  }, [sceneHandle, syncToPhysicalRobot]);
+  }, [sceneHandle]);
+
+  const lastSyncedPosition = useRef<{ x: number; y: number; z: number } | null>(null);
+  const [objectDistances, setObjectDistances] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!sceneHandle) {
+      lastSyncedPosition.current = null;
+      setObjectDistances({});
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      const robot = sceneHandle.getActiveRobot();
+      const position = robot?.robot?.position;
+
+      if (!position) {
+        return;
+      }
+
+      console.log("position", position)
+
+      if (sceneHandle?.getGrippableObjects) {
+        const objects = sceneHandle.getGrippableObjects();
+        const newDistances: Record<string, number> = {};
+
+        objects.forEach(obj => {
+          const distance = Math.sqrt(
+            (obj.position.x - position.x) ** 2 +
+            (obj.position.y - position.y) ** 2 +
+            (obj.position.z - position.z) ** 2
+          );
+          newDistances[obj.name] = distance;
+        });
+
+        setObjectDistances(prev => {
+          const prevKeys = Object.keys(prev);
+          const newKeys = Object.keys(newDistances);
+          if (prevKeys.length === newKeys.length && prevKeys.every(key => newDistances.hasOwnProperty(key))) {
+            let changed = false;
+            for (const key of newKeys) {
+              if (Math.abs((prev[key] ?? Infinity) - newDistances[key]) > 1e-4) {
+                changed = true;
+                break;
+              }
+            }
+            if (!changed) {
+              return prev;
+            }
+          }
+          return newDistances;
+        });
+      }
+
+      const current = { x: position.x, y: position.y, z: position.z };
+      const previous = lastSyncedPosition.current;
+
+      const hasChanged = !previous || previous.x !== current.x || previous.y !== current.y || previous.z !== current.z;
+
+      if (hasChanged) {
+        lastSyncedPosition.current = current;
+        syncToPhysicalRobot();
+      }
+    }, 2000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      lastSyncedPosition.current = null;
+      setObjectDistances({});
+    };
+  }, [sceneHandle, robotConnection]);
 
   const PlanarControls = useMemo(() => planarControl.renderControls(), [planarControl]);
 
@@ -245,7 +323,7 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
     // Check if reachable (simple bounds check)
     const maxReach = 2; // Approximate max reach in units
     if (horizontalDistance > maxReach) {
-      alert(`Object "${objectName}" is too far away (${horizontalDistance.toFixed(2)}m). Max reach: ${maxReach}m`);
+      console.log(`Object "${objectName}" is too far away (${horizontalDistance.toFixed(2)}m). Max reach: ${maxReach}m`);
       return;
     }
     
@@ -268,15 +346,31 @@ const PlanarControlSection: React.FC<PlanarControlSectionProps> = ({ sceneHandle
       <div className="border-t border-gray-300 pt-3">
         <h4 className="text-sm font-semibold mb-2">Move Above Object</h4>
         <div className="flex flex-col gap-1">
-          {sceneHandle?.getGrippableObjects().map(obj => (
-            <button
-              key={obj.name}
-              onClick={() => handleMoveAboveObject(obj.name)}
-              className="px-3 py-1.5 text-xs bg-blue-100 hover:bg-blue-200 rounded transition-colors text-left"
-            >
-              {obj.name}
-            </button>
-          ))}
+          {sceneHandle?.getGrippableObjects().map(obj => {
+            const activeRobot = sceneHandle?.getActiveRobot();
+            const robotPosition = activeRobot?.robot?.position;
+            const distance = objectDistances[obj.name];
+            let distanceLabel = "";
+
+            if (distance !== undefined) {
+              distanceLabel = ` (${distance.toFixed(2)}m)`;
+            } else if (robotPosition) {
+              const dx = obj.position.x - robotPosition.x;
+              const dz = obj.position.z - robotPosition.z;
+              const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+              distanceLabel = ` (${horizontalDistance.toFixed(2)}m)`;
+            }
+
+            return (
+              <button
+                key={obj.name}
+                onClick={() => handleMoveAboveObject(obj.name)}
+                className="px-3 py-1.5 text-xs bg-blue-100 hover:bg-blue-200 rounded transition-colors text-left"
+              >
+                {obj.name}{distanceLabel}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -355,6 +449,7 @@ export const ControlPanel : React.FC<ControlPanelProps> = ({
       robot.robot.position.x += rotatedDx;
       robot.robot.position.z += rotatedDz;
       Robot.markLinksAsNeedingPhysicsUpdate(robot.robot);
+      Robot.markVisualsAsNeedingPhysicsUpdate(robot.robot);
       robot.updateGrippedObjectPositions();
     }
   };
@@ -371,6 +466,7 @@ export const ControlPanel : React.FC<ControlPanelProps> = ({
       // Clamp rotation to 0 to 2π
       robot.robot.rotation.z = ((robot.robot.rotation.z % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI);
       Robot.markLinksAsNeedingPhysicsUpdate(robot.robot);
+      Robot.markVisualsAsNeedingPhysicsUpdate(robot.robot);
       robot.updateGrippedObjectPositions();
     }
   };
@@ -387,10 +483,25 @@ export const ControlPanel : React.FC<ControlPanelProps> = ({
         }`}
       >
         <TabGroup>
-          <div className="flex items-center justify-between mb-4 relative">
+          {/* Header with title and settings */}
+          <div className="flex items-center justify-between mb-2 relative">
             <h3 className="text-lg font-semibold">Robot Control</h3>
             <div className="flex items-center gap-2">
-              <TabList className="flex space-x-1 rounded-lg bg-gray-200 p-1">
+              {/* Settings Icon */}
+              <button
+                type="button"
+                onClick={() => setShowCameraSettings(!showCameraSettings)}
+                className="w-8 h-8 flex items-center justify-center rounded bg-gray-200 hover:bg-gray-300 transition-colors cursor-pointer"
+                title="Settings"
+              >
+                <Settings size={16} />
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs on separate line */}
+          <div className="mb-4">
+            <TabList className="flex space-x-1 rounded-lg bg-gray-200 p-1">
               <Tab
                 className={({ selected }) =>
                   `rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
@@ -417,20 +528,24 @@ export const ControlPanel : React.FC<ControlPanelProps> = ({
               >
                 Code-based
               </Tab>
+              <Tab
+                className={({ selected }) =>
+                  `rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
+                  ${
+                    selected
+                      ? 'bg-white text-gray-900 shadow'
+                      : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'
+                  }
+                  focus:outline-none`
+                }
+              >
+                Chat
+              </Tab>
             </TabList>
-            
-            {/* Settings Icon */}
-            <button
-              type="button"
-              onClick={() => setShowCameraSettings(!showCameraSettings)}
-              className="w-8 h-8 flex items-center justify-center rounded bg-gray-200 hover:bg-gray-300 transition-colors cursor-pointer"
-              title="Settings"
-            >
-              <Settings size={16} />
-            </button>
+          </div>
 
-            {/* Settings Popup */}
-            {showCameraSettings && (
+          {/* Settings Popup */}
+          {showCameraSettings && (
               <div className="absolute top-10 right-0 w-64 bg-white border border-gray-300 rounded p-4 z-50 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold">Settings</h4>
@@ -493,8 +608,6 @@ export const ControlPanel : React.FC<ControlPanelProps> = ({
                 </div>
               </div>
             )}
-          </div>
-          </div>
           
           <TabPanels>
             <TabPanel className="flex flex-col gap-4">
@@ -510,6 +623,9 @@ export const ControlPanel : React.FC<ControlPanelProps> = ({
             </TabPanel>
             <TabPanel>
               <RemoteControl sceneHandle={sceneHandle} />
+            </TabPanel>
+            <TabPanel>
+              <Chat className="h-[calc(100vh-250px)]" />
             </TabPanel>
           </TabPanels>
         </TabGroup>

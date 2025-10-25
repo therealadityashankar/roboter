@@ -811,10 +811,27 @@ const App = ()=>{
                                 lineNumber: 83,
                                 columnNumber: 11
                             }, undefined),
-                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("p", {
-                                className: "text-gray-600 text-center text-sm quicksand",
-                                children: "a video game for robots"
-                            }, void 0, false, {
+                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                className: "flex items-center justify-center gap-3",
+                                children: [
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("p", {
+                                        className: "text-gray-600 text-sm quicksand",
+                                        children: "a video game for robots"
+                                    }, void 0, false, {
+                                        fileName: "index.tsx",
+                                        lineNumber: 85,
+                                        columnNumber: 13
+                                    }, undefined),
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("span", {
+                                        className: "text-xs font-bold text-gray-700 bg-yellow-100 border border-yellow-300 px-3 py-1 rounded quicksand",
+                                        children: "Alpha Product - Work in Progress :)"
+                                    }, void 0, false, {
+                                        fileName: "index.tsx",
+                                        lineNumber: 86,
+                                        columnNumber: 13
+                                    }, undefined)
+                                ]
+                            }, void 0, true, {
                                 fileName: "index.tsx",
                                 lineNumber: 84,
                                 columnNumber: 11
@@ -838,17 +855,17 @@ const App = ()=>{
                                         className: "w-full h-full block"
                                     }, void 0, false, {
                                         fileName: "index.tsx",
-                                        lineNumber: 93,
+                                        lineNumber: 98,
                                         columnNumber: 15
                                     }, undefined)
                                 }, void 0, false, {
                                     fileName: "index.tsx",
-                                    lineNumber: 89,
+                                    lineNumber: 94,
                                     columnNumber: 13
                                 }, undefined)
                             }, void 0, false, {
                                 fileName: "index.tsx",
-                                lineNumber: 88,
+                                lineNumber: 93,
                                 columnNumber: 11
                             }, undefined),
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _controlPanel.ControlPanel), {
@@ -859,13 +876,13 @@ const App = ()=>{
                                 sceneHandle: sceneHandle
                             }, void 0, false, {
                                 fileName: "index.tsx",
-                                lineNumber: 97,
+                                lineNumber: 102,
                                 columnNumber: 11
                             }, undefined)
                         ]
                     }, void 0, true, {
                         fileName: "index.tsx",
-                        lineNumber: 87,
+                        lineNumber: 92,
                         columnNumber: 9
                     }, undefined)
                 ]
@@ -888,7 +905,7 @@ if (rootElement) {
     const root = (0, _client.createRoot)(rootElement);
     root.render(/*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)(App, {}, void 0, false, {
         fileName: "index.tsx",
-        lineNumber: 114,
+        lineNumber: 119,
         columnNumber: 15
     }, undefined));
 }
@@ -17570,6 +17587,7 @@ var _react = require("react");
 var _reactDefault = parcelHelpers.interopDefault(_react);
 var _react1 = require("@headlessui/react");
 var _lucideReact = require("lucide-react");
+var _chat = require("./Chat");
 var _planar = require("../planar");
 var _index = require("./index");
 var _robotConnection = require("./RobotConnection");
@@ -17580,8 +17598,11 @@ const robotButtonBase = 'px-3 py-1 text-xs bg-transparent text-gray-800 border r
 const getRobotButtonClasses = (activeRobot, key)=>`${robotButtonBase} ${activeRobot === key ? 'border-gray-800' : 'border-gray-300'}`;
 const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
     _s();
+    const syncToPhysicalRobotRef = (0, _react.useRef)(async ()=>{});
     // Helper function to sync virtual robot state to physical robot
     const syncToPhysicalRobot = async ()=>{
+        //if (currentlySyncing) return;
+        //currentlySyncing = true;
         const teleoperator = robotConnection?.getRobotTeleoperator();
         if (!teleoperator) return;
         const robot = sceneHandle?.getActiveRobot();
@@ -17589,8 +17610,9 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
         const motorPositions = {};
         // Map each joint to its corresponding motor
         const jointNames = [
-            'shoulder_pan'
-        ] //, 'shoulder_lift', 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper'];
+            'shoulder_pan',
+            'shoulder_lift'
+        ] //, 'elbow_flex', 'wrist_flex', 'wrist_roll', 'gripper'];
         ;
         const shoulderPanMotorConfig = teleoperator.motorConfigs.find((config)=>config.name === 'shoulder_pan');
         const minPosition = shoulderPanMotorConfig?.minPosition;
@@ -17608,6 +17630,7 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
         await teleoperator.setMotorPositions(motorPositions);
         console.log('Sent to physical robot:', motorPositions);
     };
+    syncToPhysicalRobotRef.current = syncToPhysicalRobot;
     const planarControl = (0, _react.useMemo)(()=>{
         const control = new (0, _planar.PlanarControl)({
             onChange: (position, theta, circleSize)=>{
@@ -17663,7 +17686,7 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
                         robot.setPivotValue('elbow_flex', elbowFlexValue);
                     }
                 }
-                syncToPhysicalRobot();
+                syncToPhysicalRobotRef.current();
             },
             onGripperAngleChange: (angle)=>{
                 const robot = sceneHandle?.getActiveRobot();
@@ -17677,7 +17700,7 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
                     let pivotValue = wristRollPivot.lower + normalizedAngle * (wristRollPivot.upper - wristRollPivot.lower);
                     robot.setPivotValue('wrist_roll', pivotValue);
                 }
-                syncToPhysicalRobot();
+                syncToPhysicalRobotRef.current();
             },
             onGripperMouthAngleChange: (angle)=>{
                 const robot = sceneHandle?.getActiveRobot();
@@ -17689,7 +17712,7 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
                     const gripperValue = gripperPivot.upper - (gripperPivot.lower + normalized * (gripperPivot.upper - gripperPivot.lower));
                     robot.setPivotValue('gripper', gripperValue);
                 }
-                syncToPhysicalRobot();
+                syncToPhysicalRobotRef.current();
             },
             onWristFlexChange: (angleDegrees)=>{
                 const robot = sceneHandle?.getActiveRobot();
@@ -17701,13 +17724,67 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
                     let pivotValue = wristFlexPivot.lower + normalizedAngle * (wristFlexPivot.upper - wristFlexPivot.lower);
                     robot.setPivotValue('wrist_flex', pivotValue);
                 }
-                syncToPhysicalRobot();
+                syncToPhysicalRobotRef.current();
             }
         });
         return control;
     }, [
+        sceneHandle
+    ]);
+    const lastSyncedPosition = (0, _react.useRef)(null);
+    const [objectDistances, setObjectDistances] = (0, _react.useState)({});
+    (0, _react.useEffect)(()=>{
+        if (!sceneHandle) {
+            lastSyncedPosition.current = null;
+            setObjectDistances({});
+            return;
+        }
+        const intervalId = window.setInterval(()=>{
+            const robot = sceneHandle.getActiveRobot();
+            const position = robot?.robot?.position;
+            if (!position) return;
+            console.log("position", position);
+            if (sceneHandle?.getGrippableObjects) {
+                const objects = sceneHandle.getGrippableObjects();
+                const newDistances = {};
+                objects.forEach((obj)=>{
+                    const distance = Math.sqrt((obj.position.x - position.x) ** 2 + (obj.position.y - position.y) ** 2 + (obj.position.z - position.z) ** 2);
+                    newDistances[obj.name] = distance;
+                });
+                setObjectDistances((prev)=>{
+                    const prevKeys = Object.keys(prev);
+                    const newKeys = Object.keys(newDistances);
+                    if (prevKeys.length === newKeys.length && prevKeys.every((key)=>newDistances.hasOwnProperty(key))) {
+                        let changed = false;
+                        for (const key of newKeys)if (Math.abs((prev[key] ?? Infinity) - newDistances[key]) > 1e-4) {
+                            changed = true;
+                            break;
+                        }
+                        if (!changed) return prev;
+                    }
+                    return newDistances;
+                });
+            }
+            const current = {
+                x: position.x,
+                y: position.y,
+                z: position.z
+            };
+            const previous = lastSyncedPosition.current;
+            const hasChanged = !previous || previous.x !== current.x || previous.y !== current.y || previous.z !== current.z;
+            if (hasChanged) {
+                lastSyncedPosition.current = current;
+                syncToPhysicalRobot();
+            }
+        }, 2000);
+        return ()=>{
+            window.clearInterval(intervalId);
+            lastSyncedPosition.current = null;
+            setObjectDistances({});
+        };
+    }, [
         sceneHandle,
-        syncToPhysicalRobot
+        robotConnection
     ]);
     const PlanarControls = (0, _react.useMemo)(()=>planarControl.renderControls(), [
         planarControl
@@ -17745,7 +17822,7 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
         // Check if reachable (simple bounds check)
         const maxReach = 2; // Approximate max reach in units
         if (horizontalDistance > maxReach) {
-            alert(`Object "${objectName}" is too far away (${horizontalDistance.toFixed(2)}m). Max reach: ${maxReach}m`);
+            console.log(`Object "${objectName}" is too far away (${horizontalDistance.toFixed(2)}m). Max reach: ${maxReach}m`);
             return;
         }
         // Set the target
@@ -17775,7 +17852,7 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
         children: [
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)(PlanarControls, {}, void 0, false, {
                 fileName: "src/components/ControlPanel.tsx",
-                lineNumber: 265,
+                lineNumber: 343,
                 columnNumber: 7
             }, undefined),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
@@ -17786,39 +17863,55 @@ const PlanarControlSection = ({ sceneHandle, robotConnection })=>{
                         children: "Move Above Object"
                     }, void 0, false, {
                         fileName: "src/components/ControlPanel.tsx",
-                        lineNumber: 269,
+                        lineNumber: 347,
                         columnNumber: 9
                     }, undefined),
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
                         className: "flex flex-col gap-1",
-                        children: sceneHandle?.getGrippableObjects().map((obj)=>/*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                        children: sceneHandle?.getGrippableObjects().map((obj)=>{
+                            const activeRobot = sceneHandle?.getActiveRobot();
+                            const robotPosition = activeRobot?.robot?.position;
+                            const distance = objectDistances[obj.name];
+                            let distanceLabel = "";
+                            if (distance !== undefined) distanceLabel = ` (${distance.toFixed(2)}m)`;
+                            else if (robotPosition) {
+                                const dx = obj.position.x - robotPosition.x;
+                                const dz = obj.position.z - robotPosition.z;
+                                const horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+                                distanceLabel = ` (${horizontalDistance.toFixed(2)}m)`;
+                            }
+                            return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
                                 onClick: ()=>handleMoveAboveObject(obj.name),
                                 className: "px-3 py-1.5 text-xs bg-blue-100 hover:bg-blue-200 rounded transition-colors text-left",
-                                children: obj.name
-                            }, obj.name, false, {
+                                children: [
+                                    obj.name,
+                                    distanceLabel
+                                ]
+                            }, obj.name, true, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 272,
-                                columnNumber: 13
-                            }, undefined))
+                                lineNumber: 365,
+                                columnNumber: 15
+                            }, undefined);
+                        })
                     }, void 0, false, {
                         fileName: "src/components/ControlPanel.tsx",
-                        lineNumber: 270,
+                        lineNumber: 348,
                         columnNumber: 9
                     }, undefined)
                 ]
             }, void 0, true, {
                 fileName: "src/components/ControlPanel.tsx",
-                lineNumber: 268,
+                lineNumber: 346,
                 columnNumber: 7
             }, undefined)
         ]
     }, void 0, true, {
         fileName: "src/components/ControlPanel.tsx",
-        lineNumber: 264,
+        lineNumber: 342,
         columnNumber: 5
     }, undefined);
 };
-_s(PlanarControlSection, "a1gKJr7pYBMC8GX4bCMvzOgTtAI=");
+_s(PlanarControlSection, "vrGjqePg7VFdKWMRq7UkW6aqMeU=");
 _c = PlanarControlSection;
 const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, sceneHandle })=>{
     _s1();
@@ -17891,6 +17984,7 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
             robot.robot.position.x += rotatedDx;
             robot.robot.position.z += rotatedDz;
             (0, _robot.Robot).markLinksAsNeedingPhysicsUpdate(robot.robot);
+            (0, _robot.Robot).markVisualsAsNeedingPhysicsUpdate(robot.robot);
             robot.updateGrippedObjectPositions();
         }
     };
@@ -17904,6 +17998,7 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
             // Clamp rotation to 0 to 2π
             robot.robot.rotation.z = (robot.robot.rotation.z % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
             (0, _robot.Robot).markLinksAsNeedingPhysicsUpdate(robot.robot);
+            (0, _robot.Robot).markVisualsAsNeedingPhysicsUpdate(robot.robot);
             robot.updateGrippedObjectPositions();
         }
     };
@@ -17916,236 +18011,251 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.TabGroup), {
                         children: [
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                className: "flex items-center justify-between mb-4 relative",
+                                className: "flex items-center justify-between mb-2 relative",
                                 children: [
                                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h3", {
                                         className: "text-lg font-semibold",
                                         children: "Robot Control"
                                     }, void 0, false, {
                                         fileName: "src/components/ControlPanel.tsx",
-                                        lineNumber: 391,
+                                        lineNumber: 488,
                                         columnNumber: 13
                                     }, undefined),
                                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
                                         className: "flex items-center gap-2",
-                                        children: [
-                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.TabList), {
-                                                className: "flex space-x-1 rounded-lg bg-gray-200 p-1",
-                                                children: [
-                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.Tab), {
-                                                        className: ({ selected })=>`rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
-                  ${selected ? 'bg-white text-gray-900 shadow' : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'}
-                  focus:outline-none`,
-                                                        children: "Manual"
-                                                    }, void 0, false, {
-                                                        fileName: "src/components/ControlPanel.tsx",
-                                                        lineNumber: 394,
-                                                        columnNumber: 15
-                                                    }, undefined),
-                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.Tab), {
-                                                        className: ({ selected })=>`rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
-                  ${selected ? 'bg-white text-gray-900 shadow' : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'}
-                  focus:outline-none`,
-                                                        children: "Code-based"
-                                                    }, void 0, false, {
-                                                        fileName: "src/components/ControlPanel.tsx",
-                                                        lineNumber: 407,
-                                                        columnNumber: 15
-                                                    }, undefined)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "src/components/ControlPanel.tsx",
-                                                lineNumber: 393,
-                                                columnNumber: 15
-                                            }, undefined),
-                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                                                type: "button",
-                                                onClick: ()=>setShowCameraSettings(!showCameraSettings),
-                                                className: "w-8 h-8 flex items-center justify-center rounded bg-gray-200 hover:bg-gray-300 transition-colors cursor-pointer",
-                                                title: "Settings",
-                                                children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _lucideReact.Settings), {
-                                                    size: 16
-                                                }, void 0, false, {
-                                                    fileName: "src/components/ControlPanel.tsx",
-                                                    lineNumber: 429,
-                                                    columnNumber: 15
-                                                }, undefined)
+                                        children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                                            type: "button",
+                                            onClick: ()=>setShowCameraSettings(!showCameraSettings),
+                                            className: "w-8 h-8 flex items-center justify-center rounded bg-gray-200 hover:bg-gray-300 transition-colors cursor-pointer",
+                                            title: "Settings",
+                                            children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _lucideReact.Settings), {
+                                                size: 16
                                             }, void 0, false, {
                                                 fileName: "src/components/ControlPanel.tsx",
-                                                lineNumber: 423,
-                                                columnNumber: 13
-                                            }, undefined),
-                                            showCameraSettings && /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                className: "absolute top-10 right-0 w-64 bg-white border border-gray-300 rounded p-4 z-50 shadow-lg",
-                                                children: [
-                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                        className: "flex items-center justify-between mb-3",
-                                                        children: [
-                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h4", {
-                                                                className: "text-sm font-semibold",
-                                                                children: "Settings"
-                                                            }, void 0, false, {
-                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                lineNumber: 436,
-                                                                columnNumber: 19
-                                                            }, undefined),
-                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                                                                onClick: ()=>setShowCameraSettings(false),
-                                                                className: "text-gray-500 hover:text-gray-700 cursor-pointer",
-                                                                children: "\u2715"
-                                                            }, void 0, false, {
-                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                lineNumber: 437,
-                                                                columnNumber: 19
-                                                            }, undefined)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "src/components/ControlPanel.tsx",
-                                                        lineNumber: 435,
-                                                        columnNumber: 17
-                                                    }, undefined),
-                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                        className: "space-y-3 text-xs",
-                                                        children: [
-                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                                className: "pb-3 border-b border-gray-200",
-                                                                children: [
-                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h5", {
-                                                                        className: "font-medium text-gray-700 mb-2",
-                                                                        children: "Robot"
-                                                                    }, void 0, false, {
-                                                                        fileName: "src/components/ControlPanel.tsx",
-                                                                        lineNumber: 448,
-                                                                        columnNumber: 21
-                                                                    }, undefined),
-                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                                        className: "flex gap-2",
-                                                                        "aria-label": "robot-switch",
-                                                                        children: [
-                                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                                                                                className: getRobotButtonClasses(activeRobot, 'lekiwi'),
-                                                                                onClick: ()=>onRobotChange('lekiwi'),
-                                                                                type: "button",
-                                                                                children: "LeKiwi"
-                                                                            }, void 0, false, {
-                                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                                lineNumber: 450,
-                                                                                columnNumber: 23
-                                                                            }, undefined),
-                                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                                                                                className: getRobotButtonClasses(activeRobot, 'so101'),
-                                                                                onClick: ()=>onRobotChange('so101'),
-                                                                                type: "button",
-                                                                                children: "SO101"
-                                                                            }, void 0, false, {
-                                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                                lineNumber: 457,
-                                                                                columnNumber: 23
-                                                                            }, undefined)
-                                                                        ]
-                                                                    }, void 0, true, {
-                                                                        fileName: "src/components/ControlPanel.tsx",
-                                                                        lineNumber: 449,
-                                                                        columnNumber: 21
-                                                                    }, undefined)
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                lineNumber: 447,
-                                                                columnNumber: 19
-                                                            }, undefined),
-                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                                children: [
-                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h5", {
-                                                                        className: "font-medium text-gray-700 mb-2",
-                                                                        children: "Camera"
-                                                                    }, void 0, false, {
-                                                                        fileName: "src/components/ControlPanel.tsx",
-                                                                        lineNumber: 469,
-                                                                        columnNumber: 21
-                                                                    }, undefined),
-                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                                        className: "flex flex-col gap-2",
-                                                                        children: [
-                                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("label", {
-                                                                                className: "flex items-center gap-2 cursor-pointer",
-                                                                                children: [
-                                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("input", {
-                                                                                        type: "checkbox",
-                                                                                        checked: storeCameraPosition,
-                                                                                        onChange: (e)=>handleStoreCameraChange(e.target.checked),
-                                                                                        className: "rounded"
-                                                                                    }, void 0, false, {
-                                                                                        fileName: "src/components/ControlPanel.tsx",
-                                                                                        lineNumber: 472,
-                                                                                        columnNumber: 25
-                                                                                    }, undefined),
-                                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("span", {
-                                                                                        className: "text-gray-700",
-                                                                                        children: "Remember position"
-                                                                                    }, void 0, false, {
-                                                                                        fileName: "src/components/ControlPanel.tsx",
-                                                                                        lineNumber: 478,
-                                                                                        columnNumber: 25
-                                                                                    }, undefined)
-                                                                                ]
-                                                                            }, void 0, true, {
-                                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                                lineNumber: 471,
-                                                                                columnNumber: 23
-                                                                            }, undefined),
-                                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
-                                                                                onClick: handleResetCamera,
-                                                                                className: "w-full px-3 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors",
-                                                                                children: "Reset Camera"
-                                                                            }, void 0, false, {
-                                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                                lineNumber: 481,
-                                                                                columnNumber: 23
-                                                                            }, undefined),
-                                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
-                                                                                className: "text-[10px] text-gray-500 mt-1 pt-2 border-t",
-                                                                                children: "When enabled, camera position will be saved and restored on page reload."
-                                                                            }, void 0, false, {
-                                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                                lineNumber: 488,
-                                                                                columnNumber: 23
-                                                                            }, undefined)
-                                                                        ]
-                                                                    }, void 0, true, {
-                                                                        fileName: "src/components/ControlPanel.tsx",
-                                                                        lineNumber: 470,
-                                                                        columnNumber: 21
-                                                                    }, undefined)
-                                                                ]
-                                                            }, void 0, true, {
-                                                                fileName: "src/components/ControlPanel.tsx",
-                                                                lineNumber: 468,
-                                                                columnNumber: 19
-                                                            }, undefined)
-                                                        ]
-                                                    }, void 0, true, {
-                                                        fileName: "src/components/ControlPanel.tsx",
-                                                        lineNumber: 445,
-                                                        columnNumber: 17
-                                                    }, undefined)
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "src/components/ControlPanel.tsx",
-                                                lineNumber: 434,
-                                                columnNumber: 15
+                                                lineNumber: 497,
+                                                columnNumber: 17
                                             }, undefined)
-                                        ]
-                                    }, void 0, true, {
+                                        }, void 0, false, {
+                                            fileName: "src/components/ControlPanel.tsx",
+                                            lineNumber: 491,
+                                            columnNumber: 15
+                                        }, undefined)
+                                    }, void 0, false, {
                                         fileName: "src/components/ControlPanel.tsx",
-                                        lineNumber: 392,
+                                        lineNumber: 489,
                                         columnNumber: 13
                                     }, undefined)
                                 ]
                             }, void 0, true, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 390,
+                                lineNumber: 487,
                                 columnNumber: 11
+                            }, undefined),
+                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                className: "mb-4",
+                                children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.TabList), {
+                                    className: "flex space-x-1 rounded-lg bg-gray-200 p-1",
+                                    children: [
+                                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.Tab), {
+                                            className: ({ selected })=>`rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
+                  ${selected ? 'bg-white text-gray-900 shadow' : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'}
+                  focus:outline-none`,
+                                            children: "Manual"
+                                        }, void 0, false, {
+                                            fileName: "src/components/ControlPanel.tsx",
+                                            lineNumber: 505,
+                                            columnNumber: 15
+                                        }, undefined),
+                                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.Tab), {
+                                            className: ({ selected })=>`rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
+                  ${selected ? 'bg-white text-gray-900 shadow' : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'}
+                  focus:outline-none`,
+                                            children: "Code-based"
+                                        }, void 0, false, {
+                                            fileName: "src/components/ControlPanel.tsx",
+                                            lineNumber: 518,
+                                            columnNumber: 15
+                                        }, undefined),
+                                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.Tab), {
+                                            className: ({ selected })=>`rounded-md px-3 py-1 text-sm font-medium leading-5 quicksand cursor-pointer
+                  ${selected ? 'bg-white text-gray-900 shadow' : 'text-gray-700 hover:bg-white/[0.12] hover:text-gray-900'}
+                  focus:outline-none`,
+                                            children: "Chat"
+                                        }, void 0, false, {
+                                            fileName: "src/components/ControlPanel.tsx",
+                                            lineNumber: 531,
+                                            columnNumber: 15
+                                        }, undefined)
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "src/components/ControlPanel.tsx",
+                                    lineNumber: 504,
+                                    columnNumber: 13
+                                }, undefined)
+                            }, void 0, false, {
+                                fileName: "src/components/ControlPanel.tsx",
+                                lineNumber: 503,
+                                columnNumber: 11
+                            }, undefined),
+                            showCameraSettings && /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                className: "absolute top-10 right-0 w-64 bg-white border border-gray-300 rounded p-4 z-50 shadow-lg",
+                                children: [
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                        className: "flex items-center justify-between mb-3",
+                                        children: [
+                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h4", {
+                                                className: "text-sm font-semibold",
+                                                children: "Settings"
+                                            }, void 0, false, {
+                                                fileName: "src/components/ControlPanel.tsx",
+                                                lineNumber: 551,
+                                                columnNumber: 19
+                                            }, undefined),
+                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                                                onClick: ()=>setShowCameraSettings(false),
+                                                className: "text-gray-500 hover:text-gray-700 cursor-pointer",
+                                                children: "\u2715"
+                                            }, void 0, false, {
+                                                fileName: "src/components/ControlPanel.tsx",
+                                                lineNumber: 552,
+                                                columnNumber: 19
+                                            }, undefined)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "src/components/ControlPanel.tsx",
+                                        lineNumber: 550,
+                                        columnNumber: 17
+                                    }, undefined),
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                        className: "space-y-3 text-xs",
+                                        children: [
+                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                                className: "pb-3 border-b border-gray-200",
+                                                children: [
+                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h5", {
+                                                        className: "font-medium text-gray-700 mb-2",
+                                                        children: "Robot"
+                                                    }, void 0, false, {
+                                                        fileName: "src/components/ControlPanel.tsx",
+                                                        lineNumber: 563,
+                                                        columnNumber: 21
+                                                    }, undefined),
+                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                                        className: "flex gap-2",
+                                                        "aria-label": "robot-switch",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                                                                className: getRobotButtonClasses(activeRobot, 'lekiwi'),
+                                                                onClick: ()=>onRobotChange('lekiwi'),
+                                                                type: "button",
+                                                                children: "LeKiwi"
+                                                            }, void 0, false, {
+                                                                fileName: "src/components/ControlPanel.tsx",
+                                                                lineNumber: 565,
+                                                                columnNumber: 23
+                                                            }, undefined),
+                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                                                                className: getRobotButtonClasses(activeRobot, 'so101'),
+                                                                onClick: ()=>onRobotChange('so101'),
+                                                                type: "button",
+                                                                children: "SO101"
+                                                            }, void 0, false, {
+                                                                fileName: "src/components/ControlPanel.tsx",
+                                                                lineNumber: 572,
+                                                                columnNumber: 23
+                                                            }, undefined)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "src/components/ControlPanel.tsx",
+                                                        lineNumber: 564,
+                                                        columnNumber: 21
+                                                    }, undefined)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "src/components/ControlPanel.tsx",
+                                                lineNumber: 562,
+                                                columnNumber: 19
+                                            }, undefined),
+                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                                children: [
+                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("h5", {
+                                                        className: "font-medium text-gray-700 mb-2",
+                                                        children: "Camera"
+                                                    }, void 0, false, {
+                                                        fileName: "src/components/ControlPanel.tsx",
+                                                        lineNumber: 584,
+                                                        columnNumber: 21
+                                                    }, undefined),
+                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                                        className: "flex flex-col gap-2",
+                                                        children: [
+                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("label", {
+                                                                className: "flex items-center gap-2 cursor-pointer",
+                                                                children: [
+                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("input", {
+                                                                        type: "checkbox",
+                                                                        checked: storeCameraPosition,
+                                                                        onChange: (e)=>handleStoreCameraChange(e.target.checked),
+                                                                        className: "rounded"
+                                                                    }, void 0, false, {
+                                                                        fileName: "src/components/ControlPanel.tsx",
+                                                                        lineNumber: 587,
+                                                                        columnNumber: 25
+                                                                    }, undefined),
+                                                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("span", {
+                                                                        className: "text-gray-700",
+                                                                        children: "Remember position"
+                                                                    }, void 0, false, {
+                                                                        fileName: "src/components/ControlPanel.tsx",
+                                                                        lineNumber: 593,
+                                                                        columnNumber: 25
+                                                                    }, undefined)
+                                                                ]
+                                                            }, void 0, true, {
+                                                                fileName: "src/components/ControlPanel.tsx",
+                                                                lineNumber: 586,
+                                                                columnNumber: 23
+                                                            }, undefined),
+                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                                                                onClick: handleResetCamera,
+                                                                className: "w-full px-3 py-1.5 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors",
+                                                                children: "Reset Camera"
+                                                            }, void 0, false, {
+                                                                fileName: "src/components/ControlPanel.tsx",
+                                                                lineNumber: 596,
+                                                                columnNumber: 23
+                                                            }, undefined),
+                                                            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                                                className: "text-[10px] text-gray-500 mt-1 pt-2 border-t",
+                                                                children: "When enabled, camera position will be saved and restored on page reload."
+                                                            }, void 0, false, {
+                                                                fileName: "src/components/ControlPanel.tsx",
+                                                                lineNumber: 603,
+                                                                columnNumber: 23
+                                                            }, undefined)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "src/components/ControlPanel.tsx",
+                                                        lineNumber: 585,
+                                                        columnNumber: 21
+                                                    }, undefined)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "src/components/ControlPanel.tsx",
+                                                lineNumber: 583,
+                                                columnNumber: 19
+                                            }, undefined)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "src/components/ControlPanel.tsx",
+                                        lineNumber: 560,
+                                        columnNumber: 17
+                                    }, undefined)
+                                ]
+                            }, void 0, true, {
+                                fileName: "src/components/ControlPanel.tsx",
+                                lineNumber: 549,
+                                columnNumber: 15
                             }, undefined),
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.TabPanels), {
                                 children: [
@@ -18162,27 +18272,27 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                                                 onMove: handleMove
                                                             }, void 0, false, {
                                                                 fileName: "src/components/ControlPanel.tsx",
-                                                                lineNumber: 503,
+                                                                lineNumber: 616,
                                                                 columnNumber: 19
                                                             }, undefined),
                                                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _index.RotationControl), {
                                                                 onRotate: handleRotate
                                                             }, void 0, false, {
                                                                 fileName: "src/components/ControlPanel.tsx",
-                                                                lineNumber: 504,
+                                                                lineNumber: 617,
                                                                 columnNumber: 19
                                                             }, undefined)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "src/components/ControlPanel.tsx",
-                                                        lineNumber: 502,
+                                                        lineNumber: 615,
                                                         columnNumber: 17
                                                     }, undefined),
                                                     robotConnection.render()
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "src/components/ControlPanel.tsx",
-                                                lineNumber: 501,
+                                                lineNumber: 614,
                                                 columnNumber: 15
                                             }, undefined),
                                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)(PlanarControlSection, {
@@ -18190,13 +18300,13 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                                 robotConnection: robotConnection
                                             }, void 0, false, {
                                                 fileName: "src/components/ControlPanel.tsx",
-                                                lineNumber: 509,
+                                                lineNumber: 622,
                                                 columnNumber: 15
                                             }, undefined)
                                         ]
                                     }, void 0, true, {
                                         fileName: "src/components/ControlPanel.tsx",
-                                        lineNumber: 500,
+                                        lineNumber: 613,
                                         columnNumber: 13
                                     }, undefined),
                                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.TabPanel), {
@@ -18204,24 +18314,37 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                             sceneHandle: sceneHandle
                                         }, void 0, false, {
                                             fileName: "src/components/ControlPanel.tsx",
-                                            lineNumber: 512,
+                                            lineNumber: 625,
                                             columnNumber: 15
                                         }, undefined)
                                     }, void 0, false, {
                                         fileName: "src/components/ControlPanel.tsx",
-                                        lineNumber: 511,
+                                        lineNumber: 624,
+                                        columnNumber: 13
+                                    }, undefined),
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _react1.TabPanel), {
+                                        children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _chat.Chat), {
+                                            className: "h-[calc(100vh-250px)]"
+                                        }, void 0, false, {
+                                            fileName: "src/components/ControlPanel.tsx",
+                                            lineNumber: 628,
+                                            columnNumber: 15
+                                        }, undefined)
+                                    }, void 0, false, {
+                                        fileName: "src/components/ControlPanel.tsx",
+                                        lineNumber: 627,
                                         columnNumber: 13
                                     }, undefined)
                                 ]
                             }, void 0, true, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 499,
+                                lineNumber: 612,
                                 columnNumber: 11
                             }, undefined)
                         ]
                     }, void 0, true, {
                         fileName: "src/components/ControlPanel.tsx",
-                        lineNumber: 389,
+                        lineNumber: 485,
                         columnNumber: 9
                     }, undefined),
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
@@ -18237,12 +18360,12 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                 children: "Burger bun bread (Sketchfab)"
                             }, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 519,
+                                lineNumber: 635,
                                 columnNumber: 11
                             }, undefined),
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("br", {}, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 527,
+                                lineNumber: 643,
                                 columnNumber: 11
                             }, undefined),
                             "Burger patty 3D model:",
@@ -18254,12 +18377,12 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                 children: "Cooked burger patty / meatball (Sketchfab)"
                             }, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 529,
+                                lineNumber: 645,
                                 columnNumber: 11
                             }, undefined),
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("br", {}, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 537,
+                                lineNumber: 653,
                                 columnNumber: 11
                             }, undefined),
                             "Grass 3D model by MauroGonzalezA:",
@@ -18271,12 +18394,12 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                 children: "Grass (Sketchfab)"
                             }, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 539,
+                                lineNumber: 655,
                                 columnNumber: 11
                             }, undefined),
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("br", {}, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 547,
+                                lineNumber: 663,
                                 columnNumber: 11
                             }, undefined),
                             "Mango tree 3D model by stealth86:",
@@ -18288,12 +18411,12 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                 children: "Mango tree (Sketchfab)"
                             }, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 549,
+                                lineNumber: 665,
                                 columnNumber: 11
                             }, undefined),
                             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("br", {}, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 557,
+                                lineNumber: 673,
                                 columnNumber: 11
                             }, undefined),
                             "Table 3D model by Silver10211:",
@@ -18305,19 +18428,19 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                                 children: "Table (Sketchfab)"
                             }, void 0, false, {
                                 fileName: "src/components/ControlPanel.tsx",
-                                lineNumber: 559,
+                                lineNumber: 675,
                                 columnNumber: 11
                             }, undefined)
                         ]
                     }, void 0, true, {
                         fileName: "src/components/ControlPanel.tsx",
-                        lineNumber: 517,
+                        lineNumber: 633,
                         columnNumber: 9
                     }, undefined)
                 ]
             }, void 0, true, {
                 fileName: "src/components/ControlPanel.tsx",
-                lineNumber: 384,
+                lineNumber: 480,
                 columnNumber: 7
             }, undefined),
             /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
@@ -18330,7 +18453,7 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                         children: "Controls"
                     }, void 0, false, {
                         fileName: "src/components/ControlPanel.tsx",
-                        lineNumber: 576,
+                        lineNumber: 692,
                         columnNumber: 9
                     }, undefined),
                     /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("svg", {
@@ -18346,24 +18469,24 @@ const ControlPanel = ({ activeRobot, onRobotChange, isPanelOpen, onTogglePanel, 
                             d: "M19 9l-7 7-7-7"
                         }, void 0, false, {
                             fileName: "src/components/ControlPanel.tsx",
-                            lineNumber: 584,
+                            lineNumber: 700,
                             columnNumber: 11
                         }, undefined)
                     }, void 0, false, {
                         fileName: "src/components/ControlPanel.tsx",
-                        lineNumber: 577,
+                        lineNumber: 693,
                         columnNumber: 9
                     }, undefined)
                 ]
             }, void 0, true, {
                 fileName: "src/components/ControlPanel.tsx",
-                lineNumber: 570,
+                lineNumber: 686,
                 columnNumber: 7
             }, undefined)
         ]
     }, void 0, true, {
         fileName: "src/components/ControlPanel.tsx",
-        lineNumber: 379,
+        lineNumber: 475,
         columnNumber: 5
     }, undefined);
 };
@@ -18378,7 +18501,7 @@ $RefreshReg$(_c1, "ControlPanel");
   globalThis.$RefreshReg$ = prevRefreshReg;
   globalThis.$RefreshSig$ = prevRefreshSig;
 }
-},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@headlessui/react":"dcwAn","lucide-react":"2I7qR","../planar":"8gG77","./index":"ip12w","./RobotConnection":"dqsdH","../robots/Robot":"2jjvR","../utils/inverseKinematics":"bpS6s","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi"}],"dcwAn":[function(require,module,exports,__globalThis) {
+},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","@headlessui/react":"dcwAn","lucide-react":"2I7qR","../planar":"8gG77","./index":"ip12w","./RobotConnection":"dqsdH","../robots/Robot":"2jjvR","../utils/inverseKinematics":"bpS6s","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi","./Chat":"4gDHY"}],"dcwAn":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "Description", ()=>(0, _descriptionJs.Description));
@@ -30075,7 +30198,7 @@ var _createLucideIconJsDefault = parcelHelpers.interopDefault(_createLucideIconJ
 var _iconJs = require("./Icon.js");
 var _iconJsDefault = parcelHelpers.interopDefault(_iconJs);
 
-},{"./icons/index.js":false,"./icons/alarm-clock-check.js":false,"./icons/alarm-clock-minus.js":false,"./icons/alarm-clock-plus.js":false,"./icons/arrow-down-a-z.js":false,"./icons/arrow-down-wide-narrow.js":false,"./icons/arrow-down-z-a.js":false,"./icons/arrow-up-a-z.js":false,"./icons/arrow-up-narrow-wide.js":false,"./icons/arrow-up-z-a.js":false,"./icons/axis-3d.js":false,"./icons/badge-check.js":false,"./icons/badge-question-mark.js":false,"./icons/between-horizontal-end.js":false,"./icons/between-horizontal-start.js":false,"./icons/book-dashed.js":false,"./icons/braces.js":false,"./icons/captions.js":false,"./icons/chart-area.js":false,"./icons/chart-bar-big.js":false,"./icons/chart-bar.js":false,"./icons/chart-candlestick.js":false,"./icons/chart-column-increasing.js":false,"./icons/chart-column-big.js":false,"./icons/chart-column.js":false,"./icons/chart-line.js":false,"./icons/chart-no-axes-column-increasing.js":false,"./icons/chart-no-axes-column.js":false,"./icons/chart-no-axes-gantt.js":false,"./icons/chart-pie.js":false,"./icons/chart-scatter.js":false,"./icons/chromium.js":false,"./icons/circle-alert.js":false,"./icons/circle-arrow-down.js":false,"./icons/circle-arrow-left.js":false,"./icons/circle-arrow-out-down-left.js":false,"./icons/circle-arrow-out-down-right.js":false,"./icons/circle-arrow-out-up-left.js":false,"./icons/circle-arrow-out-up-right.js":false,"./icons/circle-arrow-right.js":false,"./icons/circle-arrow-up.js":false,"./icons/circle-check-big.js":false,"./icons/circle-check.js":false,"./icons/circle-chevron-down.js":false,"./icons/circle-chevron-left.js":false,"./icons/circle-chevron-right.js":false,"./icons/circle-chevron-up.js":false,"./icons/circle-divide.js":false,"./icons/circle-gauge.js":false,"./icons/circle-minus.js":false,"./icons/circle-parking-off.js":false,"./icons/circle-parking.js":false,"./icons/circle-percent.js":false,"./icons/circle-pause.js":false,"./icons/circle-play.js":false,"./icons/circle-plus.js":false,"./icons/circle-power.js":false,"./icons/circle-question-mark.js":false,"./icons/circle-slash-2.js":false,"./icons/circle-user-round.js":false,"./icons/circle-stop.js":false,"./icons/circle-user.js":false,"./icons/circle-x.js":false,"./icons/clipboard-pen.js":false,"./icons/clipboard-pen-line.js":false,"./icons/cloud-download.js":false,"./icons/cloud-upload.js":false,"./icons/code-xml.js":false,"./icons/columns-2.js":false,"./icons/columns-3-cog.js":false,"./icons/columns-3.js":false,"./icons/contact-round.js":false,"./icons/diamond-percent.js":false,"./icons/earth.js":false,"./icons/ellipsis-vertical.js":false,"./icons/ellipsis.js":false,"./icons/file-axis-3d.js":false,"./icons/file-chart-column-increasing.js":false,"./icons/file-chart-column.js":false,"./icons/file-chart-line.js":false,"./icons/file-chart-pie.js":false,"./icons/file-cog.js":false,"./icons/file-pen-line.js":false,"./icons/file-pen.js":false,"./icons/file-play.js":false,"./icons/file-question-mark.js":false,"./icons/file-video-camera.js":false,"./icons/folder-cog.js":false,"./icons/folder-pen.js":false,"./icons/funnel-x.js":false,"./icons/funnel.js":false,"./icons/git-commit-horizontal.js":false,"./icons/grid-2x2-check.js":false,"./icons/grid-2x2-plus.js":false,"./icons/grid-2x2-x.js":false,"./icons/grid-2x2.js":false,"./icons/grid-3x3.js":"7TcMZ","./icons/hand-grab.js":false,"./icons/hand-helping.js":false,"./icons/house.js":false,"./icons/ice-cream-bowl.js":false,"./icons/ice-cream-cone.js":false,"./icons/laptop-minimal.js":false,"./icons/layers.js":false,"./icons/list-indent-decrease.js":false,"./icons/list-indent-increase.js":false,"./icons/loader-circle.js":false,"./icons/lock-keyhole-open.js":false,"./icons/lock-open.js":false,"./icons/mail-question-mark.js":false,"./icons/map-pin-pen.js":false,"./icons/message-circle-question-mark.js":false,"./icons/mic-vocal.js":false,"./icons/move-3d.js":false,"./icons/octagon-alert.js":false,"./icons/octagon-pause.js":false,"./icons/octagon-x.js":false,"./icons/paintbrush-vertical.js":false,"./icons/panel-left-close.js":false,"./icons/panel-bottom-dashed.js":false,"./icons/panel-left-dashed.js":false,"./icons/panel-left-open.js":false,"./icons/panel-left.js":false,"./icons/panel-right-dashed.js":false,"./icons/panel-top-dashed.js":false,"./icons/panels-top-left.js":false,"./icons/pen.js":false,"./icons/pen-line.js":false,"./icons/plug-zap.js":false,"./icons/rectangle-ellipsis.js":false,"./icons/rotate-3d.js":false,"./icons/rows-3.js":false,"./icons/rows-2.js":false,"./icons/scale-3d.js":false,"./icons/send-horizontal.js":false,"./icons/shield-question-mark.js":false,"./icons/shield-x.js":false,"./icons/sliders-vertical.js":false,"./icons/sparkles.js":false,"./icons/square-activity.js":false,"./icons/square-arrow-down-left.js":false,"./icons/square-arrow-down-right.js":false,"./icons/square-arrow-down.js":false,"./icons/square-arrow-left.js":false,"./icons/square-arrow-out-down-left.js":false,"./icons/square-arrow-out-down-right.js":false,"./icons/square-arrow-out-up-left.js":false,"./icons/square-arrow-out-up-right.js":false,"./icons/square-arrow-right.js":false,"./icons/square-arrow-up-left.js":false,"./icons/square-arrow-up-right.js":false,"./icons/square-arrow-up.js":false,"./icons/square-asterisk.js":false,"./icons/square-bottom-dashed-scissors.js":false,"./icons/square-check-big.js":false,"./icons/square-chart-gantt.js":false,"./icons/square-check.js":false,"./icons/square-chevron-left.js":false,"./icons/square-chevron-down.js":false,"./icons/square-chevron-right.js":false,"./icons/square-code.js":false,"./icons/square-chevron-up.js":false,"./icons/square-dashed-kanban.js":false,"./icons/square-dashed.js":false,"./icons/square-dashed-mouse-pointer.js":false,"./icons/square-divide.js":false,"./icons/square-dot.js":false,"./icons/square-equal.js":false,"./icons/square-function.js":false,"./icons/square-kanban.js":false,"./icons/square-library.js":false,"./icons/square-m.js":false,"./icons/square-menu.js":false,"./icons/square-mouse-pointer.js":false,"./icons/square-minus.js":false,"./icons/square-parking-off.js":false,"./icons/square-parking.js":false,"./icons/square-pen.js":false,"./icons/square-percent.js":false,"./icons/square-pi.js":false,"./icons/square-pilcrow.js":false,"./icons/square-play.js":false,"./icons/square-plus.js":false,"./icons/square-scissors.js":false,"./icons/square-power.js":false,"./icons/square-sigma.js":false,"./icons/square-slash.js":false,"./icons/square-split-vertical.js":false,"./icons/square-split-horizontal.js":false,"./icons/square-terminal.js":false,"./icons/square-user-round.js":false,"./icons/square-user.js":false,"./icons/square-x.js":false,"./icons/test-tube-diagonal.js":false,"./icons/text-align-center.js":false,"./icons/text-align-end.js":false,"./icons/text-align-justify.js":false,"./icons/text-align-start.js":false,"./icons/text-initial.js":false,"./icons/text-select.js":false,"./icons/text-wrap.js":false,"./icons/tram-front.js":false,"./icons/tree-palm.js":false,"./icons/triangle-alert.js":false,"./icons/tv-minimal.js":false,"./icons/university.js":false,"./icons/user-round-check.js":false,"./icons/user-round-cog.js":false,"./icons/user-round-plus.js":false,"./icons/user-round-minus.js":false,"./icons/user-round-x.js":false,"./icons/user-round.js":false,"./icons/users-round.js":false,"./icons/utensils-crossed.js":false,"./icons/utensils.js":false,"./icons/wallet-minimal.js":false,"./icons/wand-sparkles.js":false,"./icons/a-arrow-down.js":false,"./icons/a-arrow-up.js":false,"./icons/a-large-small.js":false,"./icons/accessibility.js":false,"./icons/activity.js":false,"./icons/air-vent.js":false,"./icons/airplay.js":false,"./icons/alarm-clock-off.js":false,"./icons/alarm-clock.js":false,"./icons/alarm-smoke.js":false,"./icons/align-center-horizontal.js":false,"./icons/album.js":false,"./icons/align-center-vertical.js":false,"./icons/align-end-horizontal.js":false,"./icons/align-end-vertical.js":false,"./icons/align-horizontal-distribute-center.js":false,"./icons/align-horizontal-distribute-end.js":false,"./icons/align-horizontal-distribute-start.js":false,"./icons/align-horizontal-justify-center.js":false,"./icons/align-horizontal-justify-end.js":false,"./icons/align-horizontal-justify-start.js":false,"./icons/align-horizontal-space-around.js":false,"./icons/align-horizontal-space-between.js":false,"./icons/align-start-horizontal.js":false,"./icons/align-start-vertical.js":false,"./icons/align-vertical-distribute-center.js":false,"./icons/align-vertical-distribute-end.js":false,"./icons/align-vertical-justify-center.js":false,"./icons/align-vertical-justify-end.js":false,"./icons/align-vertical-distribute-start.js":false,"./icons/align-vertical-justify-start.js":false,"./icons/align-vertical-space-around.js":false,"./icons/align-vertical-space-between.js":false,"./icons/ambulance.js":false,"./icons/ampersand.js":false,"./icons/ampersands.js":false,"./icons/amphora.js":false,"./icons/anchor.js":false,"./icons/angry.js":false,"./icons/annoyed.js":false,"./icons/antenna.js":false,"./icons/anvil.js":false,"./icons/aperture.js":false,"./icons/app-window.js":false,"./icons/app-window-mac.js":false,"./icons/apple.js":false,"./icons/archive-restore.js":false,"./icons/archive-x.js":false,"./icons/archive.js":false,"./icons/armchair.js":false,"./icons/arrow-big-down-dash.js":false,"./icons/arrow-big-left-dash.js":false,"./icons/arrow-big-left.js":false,"./icons/arrow-big-right-dash.js":false,"./icons/arrow-big-down.js":false,"./icons/arrow-big-right.js":false,"./icons/arrow-big-up-dash.js":false,"./icons/arrow-big-up.js":false,"./icons/arrow-down-left.js":false,"./icons/arrow-down-from-line.js":false,"./icons/arrow-down-narrow-wide.js":false,"./icons/arrow-down-to-dot.js":false,"./icons/arrow-down-right.js":false,"./icons/arrow-down-to-line.js":false,"./icons/arrow-down-up.js":false,"./icons/arrow-down.js":false,"./icons/arrow-left-from-line.js":false,"./icons/arrow-left-right.js":false,"./icons/arrow-left-to-line.js":false,"./icons/arrow-left.js":false,"./icons/arrow-right-from-line.js":false,"./icons/arrow-right-left.js":false,"./icons/arrow-right-to-line.js":false,"./icons/arrow-right.js":false,"./icons/arrow-up-down.js":false,"./icons/arrow-up-from-dot.js":false,"./icons/arrow-up-from-line.js":false,"./icons/arrow-up-left.js":false,"./icons/arrow-up-right.js":false,"./icons/arrow-up-to-line.js":false,"./icons/arrow-up-wide-narrow.js":false,"./icons/arrow-up.js":false,"./icons/asterisk.js":false,"./icons/arrows-up-from-line.js":false,"./icons/at-sign.js":false,"./icons/audio-waveform.js":false,"./icons/atom.js":false,"./icons/audio-lines.js":false,"./icons/award.js":false,"./icons/axe.js":false,"./icons/baby.js":false,"./icons/backpack.js":false,"./icons/badge-alert.js":false,"./icons/badge-cent.js":false,"./icons/badge-dollar-sign.js":false,"./icons/badge-euro.js":false,"./icons/badge-indian-rupee.js":false,"./icons/badge-info.js":false,"./icons/badge-japanese-yen.js":false,"./icons/badge-minus.js":false,"./icons/badge-plus.js":false,"./icons/badge-percent.js":false,"./icons/badge-pound-sterling.js":false,"./icons/badge-russian-ruble.js":false,"./icons/badge-swiss-franc.js":false,"./icons/badge-turkish-lira.js":false,"./icons/badge-x.js":false,"./icons/badge.js":false,"./icons/baggage-claim.js":false,"./icons/ban.js":false,"./icons/banana.js":false,"./icons/banknote-arrow-down.js":false,"./icons/bandage.js":false,"./icons/banknote-arrow-up.js":false,"./icons/banknote.js":false,"./icons/banknote-x.js":false,"./icons/barcode.js":false,"./icons/barrel.js":false,"./icons/baseline.js":false,"./icons/battery-charging.js":false,"./icons/battery-full.js":false,"./icons/battery-low.js":false,"./icons/bath.js":false,"./icons/battery-medium.js":false,"./icons/battery-plus.js":false,"./icons/battery.js":false,"./icons/battery-warning.js":false,"./icons/beaker.js":false,"./icons/bean-off.js":false,"./icons/bean.js":false,"./icons/bed-double.js":false,"./icons/bed-single.js":false,"./icons/bed.js":false,"./icons/beef.js":false,"./icons/beer-off.js":false,"./icons/beer.js":false,"./icons/bell-dot.js":false,"./icons/bell-electric.js":false,"./icons/bell-minus.js":false,"./icons/bell-off.js":false,"./icons/bell-plus.js":false,"./icons/bell-ring.js":false,"./icons/bell.js":false,"./icons/between-vertical-end.js":false,"./icons/biceps-flexed.js":false,"./icons/between-vertical-start.js":false,"./icons/bike.js":false,"./icons/binary.js":false,"./icons/binoculars.js":false,"./icons/bird.js":false,"./icons/bitcoin.js":false,"./icons/biohazard.js":false,"./icons/blend.js":false,"./icons/blinds.js":false,"./icons/blocks.js":false,"./icons/bluetooth-connected.js":false,"./icons/bluetooth-off.js":false,"./icons/bluetooth.js":false,"./icons/bluetooth-searching.js":false,"./icons/bold.js":false,"./icons/bolt.js":false,"./icons/bomb.js":false,"./icons/bone.js":false,"./icons/book-a.js":false,"./icons/book-alert.js":false,"./icons/book-audio.js":false,"./icons/book-check.js":false,"./icons/book-copy.js":false,"./icons/book-down.js":false,"./icons/book-headphones.js":false,"./icons/book-heart.js":false,"./icons/book-image.js":false,"./icons/book-key.js":false,"./icons/book-lock.js":false,"./icons/book-marked.js":false,"./icons/book-minus.js":false,"./icons/book-open-text.js":false,"./icons/book-open-check.js":false,"./icons/book-open.js":false,"./icons/book-plus.js":false,"./icons/book-text.js":false,"./icons/book-up-2.js":false,"./icons/book-type.js":false,"./icons/book-up.js":false,"./icons/book-user.js":false,"./icons/book-x.js":false,"./icons/book.js":false,"./icons/bookmark-check.js":false,"./icons/bookmark-minus.js":false,"./icons/bookmark-x.js":false,"./icons/bookmark-plus.js":false,"./icons/bookmark.js":false,"./icons/boom-box.js":false,"./icons/bot-message-square.js":false,"./icons/bot-off.js":false,"./icons/bot.js":"64nbc","./icons/bottle-wine.js":false,"./icons/bow-arrow.js":false,"./icons/box.js":"bjZeW","./icons/boxes.js":false,"./icons/brackets.js":false,"./icons/brain-circuit.js":false,"./icons/brain-cog.js":false,"./icons/brain.js":false,"./icons/brick-wall-fire.js":false,"./icons/brick-wall.js":false,"./icons/brick-wall-shield.js":false,"./icons/briefcase-business.js":false,"./icons/briefcase-medical.js":false,"./icons/briefcase-conveyor-belt.js":false,"./icons/briefcase.js":false,"./icons/bring-to-front.js":false,"./icons/brush-cleaning.js":false,"./icons/bubbles.js":false,"./icons/bug-off.js":false,"./icons/brush.js":false,"./icons/bug-play.js":false,"./icons/bug.js":false,"./icons/building-2.js":false,"./icons/bus-front.js":false,"./icons/building.js":false,"./icons/bus.js":false,"./icons/cable-car.js":false,"./icons/cable.js":false,"./icons/calculator.js":false,"./icons/cake-slice.js":false,"./icons/cake.js":false,"./icons/calendar-1.js":false,"./icons/calendar-arrow-down.js":false,"./icons/calendar-arrow-up.js":false,"./icons/calendar-check.js":false,"./icons/calendar-clock.js":false,"./icons/calendar-check-2.js":false,"./icons/calendar-cog.js":false,"./icons/calendar-days.js":false,"./icons/calendar-heart.js":false,"./icons/calendar-fold.js":false,"./icons/calendar-minus-2.js":false,"./icons/calendar-off.js":false,"./icons/calendar-minus.js":false,"./icons/calendar-plus-2.js":false,"./icons/calendar-plus.js":false,"./icons/calendar-range.js":false,"./icons/calendar-sync.js":false,"./icons/calendar-x-2.js":false,"./icons/calendar-search.js":false,"./icons/calendar.js":false,"./icons/calendar-x.js":false,"./icons/camera-off.js":false,"./icons/camera.js":false,"./icons/candy-cane.js":false,"./icons/candy-off.js":false,"./icons/cannabis.js":false,"./icons/candy.js":false,"./icons/captions-off.js":false,"./icons/car-front.js":false,"./icons/car-taxi-front.js":false,"./icons/car.js":false,"./icons/caravan.js":false,"./icons/card-sim.js":false,"./icons/carrot.js":false,"./icons/case-lower.js":false,"./icons/case-sensitive.js":false,"./icons/case-upper.js":false,"./icons/cassette-tape.js":false,"./icons/cast.js":false,"./icons/castle.js":false,"./icons/cat.js":false,"./icons/cctv.js":false,"./icons/chart-bar-decreasing.js":false,"./icons/chart-bar-increasing.js":false,"./icons/chart-bar-stacked.js":false,"./icons/chart-column-decreasing.js":false,"./icons/chart-column-stacked.js":false,"./icons/chart-gantt.js":false,"./icons/chart-network.js":false,"./icons/chart-no-axes-column-decreasing.js":false,"./icons/chart-no-axes-combined.js":false,"./icons/chart-spline.js":false,"./icons/check-check.js":false,"./icons/check-line.js":false,"./icons/check.js":"irEtD","./icons/chef-hat.js":false,"./icons/cherry.js":false,"./icons/chevron-first.js":false,"./icons/chevron-last.js":false,"./icons/chevron-down.js":false,"./icons/chevron-left.js":false,"./icons/chevron-right.js":false,"./icons/chevron-up.js":false,"./icons/chevrons-down-up.js":false,"./icons/chevrons-down.js":false,"./icons/chevrons-left-right-ellipsis.js":false,"./icons/chevrons-left-right.js":false,"./icons/chevrons-left.js":false,"./icons/chevrons-right-left.js":false,"./icons/chevrons-right.js":false,"./icons/chevrons-up-down.js":false,"./icons/chevrons-up.js":false,"./icons/church.js":false,"./icons/cigarette-off.js":false,"./icons/cigarette.js":false,"./icons/circle-dashed.js":false,"./icons/circle-dollar-sign.js":false,"./icons/circle-dot-dashed.js":false,"./icons/circle-dot.js":false,"./icons/circle-ellipsis.js":false,"./icons/circle-equal.js":false,"./icons/circle-fading-arrow-up.js":false,"./icons/circle-fading-plus.js":false,"./icons/circle-off.js":false,"./icons/circle-pound-sterling.js":false,"./icons/circle-slash.js":false,"./icons/circle-small.js":false,"./icons/circle-star.js":false,"./icons/circle.js":false,"./icons/circuit-board.js":"fT7sK","./icons/citrus.js":false,"./icons/clapperboard.js":false,"./icons/clipboard-check.js":false,"./icons/clipboard-clock.js":false,"./icons/clipboard-copy.js":false,"./icons/clipboard-list.js":false,"./icons/clipboard-minus.js":false,"./icons/clipboard-paste.js":false,"./icons/clipboard-plus.js":false,"./icons/clipboard-type.js":false,"./icons/clipboard-x.js":false,"./icons/clipboard.js":false,"./icons/clock-1.js":false,"./icons/clock-10.js":false,"./icons/clock-11.js":false,"./icons/clock-12.js":false,"./icons/clock-2.js":false,"./icons/clock-3.js":false,"./icons/clock-4.js":false,"./icons/clock-5.js":false,"./icons/clock-6.js":false,"./icons/clock-7.js":false,"./icons/clock-8.js":false,"./icons/clock-9.js":false,"./icons/clock-alert.js":false,"./icons/clock-arrow-down.js":false,"./icons/clock-arrow-up.js":false,"./icons/clock-fading.js":false,"./icons/clock.js":false,"./icons/clock-plus.js":false,"./icons/closed-caption.js":false,"./icons/cloud-alert.js":false,"./icons/cloud-cog.js":false,"./icons/cloud-check.js":false,"./icons/cloud-drizzle.js":false,"./icons/cloud-fog.js":false,"./icons/cloud-lightning.js":false,"./icons/cloud-moon-rain.js":false,"./icons/cloud-hail.js":false,"./icons/cloud-moon.js":false,"./icons/cloud-off.js":false,"./icons/cloud-rain-wind.js":false,"./icons/cloud-rain.js":false,"./icons/cloud-snow.js":false,"./icons/cloud-sun-rain.js":false,"./icons/cloud-sun.js":false,"./icons/cloud.js":false,"./icons/cloudy.js":false,"./icons/clover.js":false,"./icons/club.js":false,"./icons/code.js":false,"./icons/codepen.js":false,"./icons/coffee.js":false,"./icons/codesandbox.js":false,"./icons/cog.js":"csH05","./icons/coins.js":false,"./icons/columns-4.js":false,"./icons/combine.js":false,"./icons/command.js":false,"./icons/compass.js":false,"./icons/component.js":false,"./icons/computer.js":false,"./icons/concierge-bell.js":false,"./icons/cone.js":false,"./icons/construction.js":false,"./icons/contact.js":false,"./icons/container.js":false,"./icons/contrast.js":false,"./icons/cookie.js":false,"./icons/cooking-pot.js":false,"./icons/copy-check.js":false,"./icons/copy-minus.js":false,"./icons/copy-plus.js":false,"./icons/copy-x.js":false,"./icons/copy-slash.js":false,"./icons/copy.js":"h8FFa","./icons/copyleft.js":false,"./icons/copyright.js":false,"./icons/corner-down-left.js":false,"./icons/corner-down-right.js":false,"./icons/corner-left-down.js":false,"./icons/corner-left-up.js":false,"./icons/corner-right-down.js":false,"./icons/corner-right-up.js":false,"./icons/corner-up-left.js":false,"./icons/corner-up-right.js":false,"./icons/cpu.js":"achTd","./icons/credit-card.js":false,"./icons/creative-commons.js":false,"./icons/croissant.js":false,"./icons/crop.js":false,"./icons/cross.js":false,"./icons/crosshair.js":false,"./icons/crown.js":false,"./icons/cuboid.js":false,"./icons/cup-soda.js":false,"./icons/currency.js":false,"./icons/cylinder.js":false,"./icons/dam.js":false,"./icons/database-zap.js":false,"./icons/database-backup.js":false,"./icons/database.js":false,"./icons/decimals-arrow-left.js":false,"./icons/decimals-arrow-right.js":false,"./icons/delete.js":false,"./icons/dessert.js":false,"./icons/diameter.js":false,"./icons/diamond-minus.js":false,"./icons/diamond-plus.js":false,"./icons/diamond.js":false,"./icons/dice-1.js":false,"./icons/dice-2.js":false,"./icons/dice-3.js":false,"./icons/dice-4.js":false,"./icons/dice-5.js":false,"./icons/dice-6.js":false,"./icons/dices.js":false,"./icons/diff.js":false,"./icons/disc-2.js":false,"./icons/disc-3.js":false,"./icons/disc-album.js":false,"./icons/disc.js":false,"./icons/divide.js":false,"./icons/dna.js":false,"./icons/dna-off.js":false,"./icons/dock.js":false,"./icons/dog.js":false,"./icons/dollar-sign.js":false,"./icons/donut.js":false,"./icons/door-closed-locked.js":false,"./icons/door-closed.js":false,"./icons/door-open.js":false,"./icons/dot.js":false,"./icons/download.js":false,"./icons/drafting-compass.js":false,"./icons/drama.js":false,"./icons/drill.js":false,"./icons/dribbble.js":false,"./icons/drone.js":false,"./icons/droplet-off.js":false,"./icons/droplet.js":false,"./icons/droplets.js":false,"./icons/drum.js":false,"./icons/drumstick.js":false,"./icons/dumbbell.js":false,"./icons/ear-off.js":false,"./icons/ear.js":false,"./icons/earth-lock.js":false,"./icons/eclipse.js":false,"./icons/egg-fried.js":false,"./icons/egg-off.js":false,"./icons/egg.js":false,"./icons/equal-approximately.js":false,"./icons/equal-not.js":false,"./icons/equal.js":false,"./icons/eraser.js":false,"./icons/ethernet-port.js":false,"./icons/euro.js":false,"./icons/ev-charger.js":false,"./icons/expand.js":false,"./icons/external-link.js":false,"./icons/eye-closed.js":false,"./icons/eye-off.js":false,"./icons/eye.js":false,"./icons/facebook.js":false,"./icons/fast-forward.js":false,"./icons/factory.js":false,"./icons/fan.js":false,"./icons/feather.js":false,"./icons/fence.js":false,"./icons/ferris-wheel.js":false,"./icons/figma.js":false,"./icons/file-audio-2.js":false,"./icons/file-archive.js":false,"./icons/file-audio.js":false,"./icons/file-badge-2.js":false,"./icons/file-badge.js":false,"./icons/file-box.js":false,"./icons/file-check-2.js":false,"./icons/file-check.js":false,"./icons/file-clock.js":false,"./icons/file-code-2.js":false,"./icons/file-code.js":false,"./icons/file-diff.js":false,"./icons/file-digit.js":false,"./icons/file-down.js":false,"./icons/file-heart.js":false,"./icons/file-input.js":false,"./icons/file-image.js":false,"./icons/file-json.js":false,"./icons/file-json-2.js":false,"./icons/file-key-2.js":false,"./icons/file-key.js":false,"./icons/file-lock-2.js":false,"./icons/file-lock.js":false,"./icons/file-minus-2.js":false,"./icons/file-minus.js":false,"./icons/file-music.js":false,"./icons/file-output.js":false,"./icons/file-plus-2.js":false,"./icons/file-plus.js":false,"./icons/file-scan.js":false,"./icons/file-search-2.js":false,"./icons/file-search.js":false,"./icons/file-sliders.js":false,"./icons/file-spreadsheet.js":false,"./icons/file-stack.js":false,"./icons/file-symlink.js":false,"./icons/file-terminal.js":false,"./icons/file-text.js":false,"./icons/file-type-2.js":false,"./icons/file-type.js":false,"./icons/file-up.js":false,"./icons/file-volume-2.js":false,"./icons/file-volume.js":false,"./icons/file-user.js":false,"./icons/file-warning.js":false,"./icons/file-x-2.js":false,"./icons/file-x.js":false,"./icons/file.js":false,"./icons/files.js":false,"./icons/film.js":false,"./icons/fingerprint.js":false,"./icons/fish-off.js":false,"./icons/fire-extinguisher.js":false,"./icons/fish-symbol.js":false,"./icons/fish.js":false,"./icons/flag-off.js":false,"./icons/flag-triangle-left.js":false,"./icons/flag.js":false,"./icons/flag-triangle-right.js":false,"./icons/flame-kindling.js":false,"./icons/flame.js":false,"./icons/flashlight-off.js":false,"./icons/flashlight.js":false,"./icons/flask-conical-off.js":false,"./icons/flask-conical.js":false,"./icons/flask-round.js":false,"./icons/flip-horizontal.js":false,"./icons/flip-horizontal-2.js":false,"./icons/flip-vertical-2.js":false,"./icons/flip-vertical.js":false,"./icons/flower-2.js":false,"./icons/flower.js":false,"./icons/focus.js":false,"./icons/fold-horizontal.js":false,"./icons/fold-vertical.js":false,"./icons/folder-archive.js":false,"./icons/folder-check.js":false,"./icons/folder-clock.js":false,"./icons/folder-closed.js":false,"./icons/folder-code.js":false,"./icons/folder-dot.js":false,"./icons/folder-down.js":false,"./icons/folder-git-2.js":false,"./icons/folder-git.js":false,"./icons/folder-heart.js":false,"./icons/folder-kanban.js":false,"./icons/folder-input.js":false,"./icons/folder-key.js":false,"./icons/folder-lock.js":false,"./icons/folder-minus.js":false,"./icons/folder-open-dot.js":false,"./icons/folder-open.js":false,"./icons/folder-output.js":false,"./icons/folder-plus.js":false,"./icons/folder-root.js":false,"./icons/folder-search-2.js":false,"./icons/folder-search.js":false,"./icons/folder-symlink.js":false,"./icons/folder-sync.js":false,"./icons/folder-tree.js":false,"./icons/folder-up.js":false,"./icons/folder-x.js":false,"./icons/folders.js":false,"./icons/folder.js":false,"./icons/footprints.js":false,"./icons/forklift.js":false,"./icons/forward.js":false,"./icons/frame.js":false,"./icons/framer.js":false,"./icons/frown.js":false,"./icons/fuel.js":false,"./icons/fullscreen.js":false,"./icons/funnel-plus.js":false,"./icons/gallery-horizontal-end.js":false,"./icons/gallery-horizontal.js":false,"./icons/gallery-thumbnails.js":false,"./icons/gallery-vertical-end.js":false,"./icons/gallery-vertical.js":false,"./icons/gamepad-2.js":false,"./icons/gauge.js":false,"./icons/gamepad.js":false,"./icons/gavel.js":false,"./icons/gem.js":false,"./icons/georgian-lari.js":false,"./icons/ghost.js":false,"./icons/gift.js":false,"./icons/git-branch-plus.js":false,"./icons/git-commit-vertical.js":false,"./icons/git-branch.js":false,"./icons/git-compare-arrows.js":false,"./icons/git-compare.js":false,"./icons/git-fork.js":false,"./icons/git-graph.js":false,"./icons/git-merge.js":false,"./icons/git-pull-request-arrow.js":false,"./icons/git-pull-request-closed.js":false,"./icons/git-pull-request-create-arrow.js":false,"./icons/git-pull-request-create.js":false,"./icons/git-pull-request-draft.js":false,"./icons/git-pull-request.js":false,"./icons/github.js":false,"./icons/gitlab.js":false,"./icons/glasses.js":false,"./icons/glass-water.js":false,"./icons/globe-lock.js":false,"./icons/globe.js":false,"./icons/goal.js":false,"./icons/gpu.js":false,"./icons/graduation-cap.js":false,"./icons/grape.js":false,"./icons/grid-3x2.js":false,"./icons/grip-horizontal.js":false,"./icons/grip-vertical.js":false,"./icons/group.js":false,"./icons/grip.js":false,"./icons/guitar.js":false,"./icons/ham.js":false,"./icons/hamburger.js":false,"./icons/hammer.js":false,"./icons/hand-coins.js":false,"./icons/hand-fist.js":false,"./icons/hand-heart.js":false,"./icons/hand-metal.js":false,"./icons/hand-platter.js":false,"./icons/hand.js":false,"./icons/handbag.js":false,"./icons/handshake.js":false,"./icons/hard-drive-download.js":false,"./icons/hard-drive-upload.js":false,"./icons/hard-drive.js":false,"./icons/hard-hat.js":false,"./icons/hash.js":false,"./icons/hat-glasses.js":false,"./icons/haze.js":false,"./icons/heading-1.js":false,"./icons/heading-2.js":false,"./icons/hdmi-port.js":false,"./icons/heading-3.js":false,"./icons/heading-4.js":false,"./icons/heading-5.js":false,"./icons/heading-6.js":false,"./icons/heading.js":false,"./icons/headphone-off.js":false,"./icons/headphones.js":false,"./icons/headset.js":false,"./icons/heart-crack.js":false,"./icons/heart-minus.js":false,"./icons/heart-handshake.js":false,"./icons/heart-off.js":false,"./icons/heart-plus.js":false,"./icons/heart-pulse.js":false,"./icons/heart.js":false,"./icons/heater.js":false,"./icons/hexagon.js":false,"./icons/highlighter.js":false,"./icons/history.js":false,"./icons/hop-off.js":false,"./icons/hop.js":false,"./icons/hospital.js":false,"./icons/hotel.js":false,"./icons/hourglass.js":false,"./icons/house-heart.js":false,"./icons/house-plug.js":false,"./icons/house-plus.js":false,"./icons/house-wifi.js":false,"./icons/id-card-lanyard.js":false,"./icons/id-card.js":false,"./icons/image-down.js":false,"./icons/image-minus.js":false,"./icons/image-off.js":false,"./icons/image-play.js":false,"./icons/image-plus.js":false,"./icons/image-up.js":false,"./icons/image-upscale.js":false,"./icons/images.js":false,"./icons/image.js":false,"./icons/import.js":false,"./icons/inbox.js":false,"./icons/indian-rupee.js":false,"./icons/infinity.js":false,"./icons/info.js":false,"./icons/inspection-panel.js":false,"./icons/instagram.js":false,"./icons/italic.js":false,"./icons/iteration-cw.js":false,"./icons/iteration-ccw.js":false,"./icons/japanese-yen.js":false,"./icons/joystick.js":false,"./icons/kanban.js":false,"./icons/kayak.js":false,"./icons/key-round.js":false,"./icons/key-square.js":false,"./icons/key.js":false,"./icons/keyboard-music.js":false,"./icons/keyboard-off.js":false,"./icons/keyboard.js":false,"./icons/lamp-ceiling.js":false,"./icons/lamp-desk.js":false,"./icons/lamp-wall-down.js":false,"./icons/lamp-floor.js":false,"./icons/lamp-wall-up.js":false,"./icons/lamp.js":false,"./icons/land-plot.js":false,"./icons/landmark.js":false,"./icons/laptop-minimal-check.js":false,"./icons/languages.js":false,"./icons/laptop.js":false,"./icons/lasso-select.js":false,"./icons/lasso.js":false,"./icons/laugh.js":false,"./icons/layers-2.js":false,"./icons/layout-dashboard.js":false,"./icons/layout-grid.js":false,"./icons/layout-list.js":false,"./icons/layout-panel-left.js":false,"./icons/layout-panel-top.js":false,"./icons/layout-template.js":false,"./icons/leaf.js":false,"./icons/leafy-green.js":false,"./icons/lectern.js":false,"./icons/life-buoy.js":false,"./icons/library-big.js":false,"./icons/ligature.js":false,"./icons/library.js":false,"./icons/lightbulb-off.js":false,"./icons/lightbulb.js":false,"./icons/link-2-off.js":false,"./icons/line-squiggle.js":false,"./icons/link-2.js":false,"./icons/link.js":false,"./icons/linkedin.js":false,"./icons/list-check.js":false,"./icons/list-checks.js":false,"./icons/list-chevrons-down-up.js":false,"./icons/list-chevrons-up-down.js":false,"./icons/list-collapse.js":false,"./icons/list-end.js":false,"./icons/list-filter-plus.js":false,"./icons/list-filter.js":false,"./icons/list-minus.js":false,"./icons/list-music.js":false,"./icons/list-ordered.js":false,"./icons/list-plus.js":false,"./icons/list-restart.js":false,"./icons/list-start.js":false,"./icons/list-todo.js":false,"./icons/list-tree.js":false,"./icons/list-video.js":false,"./icons/list-x.js":false,"./icons/list.js":false,"./icons/loader-pinwheel.js":false,"./icons/loader.js":false,"./icons/locate-fixed.js":false,"./icons/locate-off.js":false,"./icons/locate.js":false,"./icons/lock-keyhole.js":false,"./icons/lock.js":false,"./icons/log-in.js":false,"./icons/log-out.js":false,"./icons/logs.js":false,"./icons/lollipop.js":false,"./icons/luggage.js":false,"./icons/magnet.js":false,"./icons/mail-check.js":false,"./icons/mail-open.js":false,"./icons/mail-minus.js":false,"./icons/mail-plus.js":false,"./icons/mail-search.js":false,"./icons/mail-warning.js":false,"./icons/mail-x.js":false,"./icons/mail.js":false,"./icons/mailbox.js":false,"./icons/mails.js":false,"./icons/map-minus.js":false,"./icons/map-pin-check-inside.js":false,"./icons/map-pin-check.js":false,"./icons/map-pin-house.js":false,"./icons/map-pin-minus-inside.js":false,"./icons/map-pin-minus.js":false,"./icons/map-pin-off.js":false,"./icons/map-pin-plus.js":false,"./icons/map-pin-plus-inside.js":false,"./icons/map-pin-x-inside.js":false,"./icons/map-pin-x.js":false,"./icons/map-pin.js":false,"./icons/map-pinned.js":false,"./icons/map-plus.js":false,"./icons/mars-stroke.js":false,"./icons/map.js":false,"./icons/mars.js":false,"./icons/martini.js":false,"./icons/maximize-2.js":false,"./icons/maximize.js":false,"./icons/medal.js":false,"./icons/megaphone.js":false,"./icons/megaphone-off.js":false,"./icons/meh.js":false,"./icons/memory-stick.js":false,"./icons/menu.js":false,"./icons/merge.js":false,"./icons/message-circle-code.js":false,"./icons/message-circle-dashed.js":false,"./icons/message-circle-heart.js":false,"./icons/message-circle-off.js":false,"./icons/message-circle-more.js":false,"./icons/message-circle-plus.js":false,"./icons/message-circle-reply.js":false,"./icons/message-circle-warning.js":false,"./icons/message-circle-x.js":false,"./icons/message-circle.js":false,"./icons/message-square-code.js":false,"./icons/message-square-dashed.js":false,"./icons/message-square-diff.js":false,"./icons/message-square-lock.js":false,"./icons/message-square-dot.js":false,"./icons/message-square-heart.js":false,"./icons/message-square-more.js":false,"./icons/message-square-plus.js":false,"./icons/message-square-off.js":false,"./icons/message-square-quote.js":false,"./icons/message-square-reply.js":false,"./icons/message-square-share.js":false,"./icons/message-square-text.js":false,"./icons/message-square-warning.js":false,"./icons/message-square-x.js":false,"./icons/message-square.js":false,"./icons/messages-square.js":false,"./icons/mic-off.js":false,"./icons/mic.js":false,"./icons/microchip.js":false,"./icons/microwave.js":false,"./icons/milestone.js":false,"./icons/microscope.js":false,"./icons/milk-off.js":false,"./icons/minimize-2.js":false,"./icons/milk.js":false,"./icons/minimize.js":false,"./icons/monitor-check.js":false,"./icons/minus.js":false,"./icons/monitor-cog.js":false,"./icons/monitor-dot.js":false,"./icons/monitor-down.js":false,"./icons/monitor-off.js":false,"./icons/monitor-pause.js":false,"./icons/monitor-smartphone.js":false,"./icons/monitor-play.js":false,"./icons/monitor-speaker.js":false,"./icons/monitor-stop.js":false,"./icons/monitor-up.js":false,"./icons/monitor-x.js":false,"./icons/monitor.js":false,"./icons/moon-star.js":false,"./icons/motorbike.js":false,"./icons/moon.js":false,"./icons/mountain.js":false,"./icons/mountain-snow.js":false,"./icons/mouse-pointer-2.js":false,"./icons/mouse-off.js":false,"./icons/mouse-pointer-ban.js":false,"./icons/mouse-pointer-click.js":false,"./icons/mouse-pointer.js":false,"./icons/mouse.js":false,"./icons/move-diagonal-2.js":false,"./icons/move-diagonal.js":false,"./icons/move-down-left.js":false,"./icons/move-down-right.js":false,"./icons/move-horizontal.js":false,"./icons/move-down.js":false,"./icons/move-left.js":false,"./icons/move-right.js":false,"./icons/move-up-right.js":false,"./icons/move-up-left.js":false,"./icons/move-up.js":false,"./icons/move.js":false,"./icons/move-vertical.js":false,"./icons/music-2.js":false,"./icons/music-3.js":false,"./icons/music-4.js":false,"./icons/music.js":false,"./icons/navigation-2.js":false,"./icons/navigation-off.js":false,"./icons/navigation-2-off.js":false,"./icons/navigation.js":false,"./icons/network.js":false,"./icons/newspaper.js":false,"./icons/nfc.js":false,"./icons/non-binary.js":false,"./icons/notebook-pen.js":false,"./icons/notebook-tabs.js":false,"./icons/notebook-text.js":false,"./icons/notebook.js":false,"./icons/notepad-text-dashed.js":false,"./icons/notepad-text.js":false,"./icons/nut-off.js":false,"./icons/octagon-minus.js":false,"./icons/nut.js":false,"./icons/octagon.js":false,"./icons/omega.js":false,"./icons/option.js":false,"./icons/orbit.js":"yZBqq","./icons/origami.js":false,"./icons/package-check.js":false,"./icons/package-2.js":false,"./icons/package-minus.js":false,"./icons/package-open.js":false,"./icons/package-plus.js":false,"./icons/package-search.js":false,"./icons/package-x.js":false,"./icons/package.js":false,"./icons/paint-roller.js":false,"./icons/paint-bucket.js":false,"./icons/paintbrush.js":false,"./icons/palette.js":false,"./icons/panda.js":false,"./icons/panel-bottom-close.js":false,"./icons/panel-bottom.js":false,"./icons/panel-bottom-open.js":false,"./icons/panel-left-right-dashed.js":false,"./icons/panel-right-close.js":false,"./icons/panel-right-open.js":false,"./icons/panel-right.js":false,"./icons/panel-top-bottom-dashed.js":false,"./icons/panel-top-close.js":false,"./icons/panel-top-open.js":false,"./icons/panel-top.js":false,"./icons/panels-left-bottom.js":false,"./icons/panels-right-bottom.js":false,"./icons/paperclip.js":false,"./icons/parentheses.js":false,"./icons/parking-meter.js":false,"./icons/party-popper.js":false,"./icons/pause.js":false,"./icons/paw-print.js":false,"./icons/pc-case.js":false,"./icons/pen-off.js":false,"./icons/pen-tool.js":false,"./icons/pencil-line.js":false,"./icons/pencil-off.js":false,"./icons/pencil-ruler.js":false,"./icons/pencil.js":false,"./icons/pentagon.js":false,"./icons/percent.js":false,"./icons/person-standing.js":false,"./icons/philippine-peso.js":false,"./icons/phone-call.js":false,"./icons/phone-incoming.js":false,"./icons/phone-forwarded.js":false,"./icons/phone-missed.js":false,"./icons/phone-off.js":false,"./icons/phone-outgoing.js":false,"./icons/phone.js":false,"./icons/pi.js":false,"./icons/piano.js":false,"./icons/pickaxe.js":false,"./icons/picture-in-picture.js":false,"./icons/picture-in-picture-2.js":false,"./icons/piggy-bank.js":false,"./icons/pilcrow-left.js":false,"./icons/pilcrow-right.js":false,"./icons/pilcrow.js":false,"./icons/pill-bottle.js":false,"./icons/pill.js":false,"./icons/pin-off.js":false,"./icons/pin.js":false,"./icons/pipette.js":false,"./icons/plane-landing.js":false,"./icons/plane-takeoff.js":false,"./icons/pizza.js":false,"./icons/plane.js":false,"./icons/plug-2.js":false,"./icons/play.js":false,"./icons/plug.js":false,"./icons/plus.js":false,"./icons/pocket-knife.js":false,"./icons/pocket.js":false,"./icons/podcast.js":false,"./icons/pointer.js":false,"./icons/pointer-off.js":false,"./icons/popcorn.js":false,"./icons/popsicle.js":false,"./icons/pound-sterling.js":false,"./icons/power-off.js":false,"./icons/power.js":false,"./icons/presentation.js":false,"./icons/printer.js":false,"./icons/projector.js":false,"./icons/printer-check.js":false,"./icons/proportions.js":false,"./icons/puzzle.js":false,"./icons/pyramid.js":false,"./icons/qr-code.js":false,"./icons/quote.js":false,"./icons/rabbit.js":false,"./icons/radar.js":false,"./icons/radiation.js":false,"./icons/radical.js":false,"./icons/radio-receiver.js":false,"./icons/radio.js":"8cgug","./icons/radio-tower.js":false,"./icons/radius.js":false,"./icons/rail-symbol.js":false,"./icons/rainbow.js":false,"./icons/rat.js":false,"./icons/ratio.js":false,"./icons/receipt-euro.js":false,"./icons/receipt-cent.js":false,"./icons/receipt-indian-rupee.js":false,"./icons/receipt-japanese-yen.js":false,"./icons/receipt-pound-sterling.js":false,"./icons/receipt-russian-ruble.js":false,"./icons/receipt-swiss-franc.js":false,"./icons/receipt-turkish-lira.js":false,"./icons/receipt.js":false,"./icons/receipt-text.js":false,"./icons/rectangle-circle.js":false,"./icons/rectangle-goggles.js":false,"./icons/rectangle-horizontal.js":false,"./icons/rectangle-vertical.js":false,"./icons/recycle.js":false,"./icons/redo-2.js":false,"./icons/redo-dot.js":false,"./icons/redo.js":false,"./icons/refresh-ccw-dot.js":false,"./icons/refresh-ccw.js":false,"./icons/refresh-cw-off.js":false,"./icons/refresh-cw.js":false,"./icons/refrigerator.js":false,"./icons/regex.js":false,"./icons/remove-formatting.js":false,"./icons/repeat-1.js":false,"./icons/repeat-2.js":false,"./icons/repeat.js":false,"./icons/replace.js":false,"./icons/replace-all.js":false,"./icons/reply-all.js":false,"./icons/rewind.js":false,"./icons/reply.js":false,"./icons/ribbon.js":false,"./icons/rocket.js":false,"./icons/rocking-chair.js":false,"./icons/roller-coaster.js":false,"./icons/rose.js":false,"./icons/rotate-ccw-key.js":false,"./icons/rotate-ccw-square.js":false,"./icons/rotate-ccw.js":false,"./icons/rotate-cw-square.js":false,"./icons/rotate-cw.js":false,"./icons/route-off.js":false,"./icons/route.js":false,"./icons/router.js":false,"./icons/rows-4.js":false,"./icons/ruler-dimension-line.js":false,"./icons/ruler.js":false,"./icons/rss.js":false,"./icons/sailboat.js":false,"./icons/russian-ruble.js":false,"./icons/salad.js":false,"./icons/sandwich.js":false,"./icons/satellite-dish.js":false,"./icons/satellite.js":false,"./icons/saudi-riyal.js":false,"./icons/save-all.js":false,"./icons/save-off.js":false,"./icons/save.js":false,"./icons/scale.js":false,"./icons/scaling.js":false,"./icons/scan-barcode.js":false,"./icons/scan-eye.js":false,"./icons/scan-face.js":false,"./icons/scan-heart.js":false,"./icons/scan-line.js":false,"./icons/scan-qr-code.js":false,"./icons/scan-search.js":false,"./icons/scan-text.js":false,"./icons/scan.js":false,"./icons/school.js":false,"./icons/scissors-line-dashed.js":false,"./icons/scissors.js":false,"./icons/screen-share-off.js":false,"./icons/screen-share.js":false,"./icons/scroll-text.js":false,"./icons/scroll.js":false,"./icons/search-check.js":false,"./icons/search-code.js":false,"./icons/search-slash.js":false,"./icons/search-x.js":false,"./icons/search.js":false,"./icons/section.js":false,"./icons/send.js":false,"./icons/send-to-back.js":false,"./icons/separator-horizontal.js":false,"./icons/separator-vertical.js":false,"./icons/server-cog.js":false,"./icons/server-crash.js":false,"./icons/server-off.js":false,"./icons/server.js":false,"./icons/settings-2.js":false,"./icons/settings.js":"icIUb","./icons/shapes.js":false,"./icons/share-2.js":false,"./icons/share.js":false,"./icons/sheet.js":false,"./icons/shell.js":false,"./icons/shield-alert.js":false,"./icons/shield-ban.js":false,"./icons/shield-check.js":false,"./icons/shield-ellipsis.js":false,"./icons/shield-half.js":false,"./icons/shield-minus.js":false,"./icons/shield-off.js":false,"./icons/shield-plus.js":false,"./icons/shield-user.js":false,"./icons/shield.js":false,"./icons/ship-wheel.js":false,"./icons/ship.js":false,"./icons/shirt.js":false,"./icons/shopping-bag.js":false,"./icons/shopping-basket.js":false,"./icons/shopping-cart.js":false,"./icons/shovel.js":false,"./icons/shower-head.js":false,"./icons/shredder.js":false,"./icons/shrimp.js":false,"./icons/shrink.js":false,"./icons/shuffle.js":false,"./icons/shrub.js":false,"./icons/signal-high.js":false,"./icons/sigma.js":false,"./icons/signal-low.js":false,"./icons/signal-medium.js":false,"./icons/signal-zero.js":false,"./icons/signal.js":false,"./icons/signature.js":false,"./icons/signpost.js":false,"./icons/signpost-big.js":false,"./icons/siren.js":false,"./icons/skip-back.js":false,"./icons/skip-forward.js":false,"./icons/skull.js":false,"./icons/slash.js":false,"./icons/slack.js":false,"./icons/slice.js":false,"./icons/smartphone-charging.js":false,"./icons/sliders-horizontal.js":false,"./icons/smartphone-nfc.js":false,"./icons/smartphone.js":false,"./icons/smile-plus.js":false,"./icons/smile.js":false,"./icons/snowflake.js":false,"./icons/snail.js":false,"./icons/soap-dispenser-droplet.js":false,"./icons/sofa.js":false,"./icons/soup.js":false,"./icons/spade.js":false,"./icons/space.js":false,"./icons/sparkle.js":false,"./icons/speaker.js":false,"./icons/spell-check-2.js":false,"./icons/speech.js":false,"./icons/spell-check.js":false,"./icons/spline-pointer.js":false,"./icons/spline.js":false,"./icons/split.js":false,"./icons/spool.js":false,"./icons/spotlight.js":false,"./icons/spray-can.js":false,"./icons/sprout.js":false,"./icons/square-dashed-bottom-code.js":false,"./icons/square-dashed-bottom.js":false,"./icons/square-dashed-top-solid.js":false,"./icons/square-pause.js":false,"./icons/square-radical.js":false,"./icons/square-round-corner.js":false,"./icons/square-square.js":false,"./icons/square-stack.js":false,"./icons/square-star.js":false,"./icons/square-stop.js":false,"./icons/square.js":false,"./icons/squares-exclude.js":false,"./icons/squares-intersect.js":false,"./icons/squares-subtract.js":false,"./icons/squircle-dashed.js":false,"./icons/squares-unite.js":false,"./icons/squircle.js":false,"./icons/squirrel.js":false,"./icons/stamp.js":false,"./icons/star-half.js":false,"./icons/star-off.js":false,"./icons/star.js":false,"./icons/step-back.js":false,"./icons/step-forward.js":false,"./icons/stethoscope.js":false,"./icons/sticker.js":false,"./icons/sticky-note.js":false,"./icons/store.js":false,"./icons/stretch-horizontal.js":false,"./icons/stretch-vertical.js":false,"./icons/strikethrough.js":false,"./icons/subscript.js":false,"./icons/sun-dim.js":false,"./icons/sun-medium.js":false,"./icons/sun-snow.js":false,"./icons/sun-moon.js":false,"./icons/sun.js":false,"./icons/sunrise.js":false,"./icons/superscript.js":false,"./icons/sunset.js":false,"./icons/swiss-franc.js":false,"./icons/switch-camera.js":false,"./icons/swatch-book.js":false,"./icons/swords.js":false,"./icons/sword.js":false,"./icons/syringe.js":false,"./icons/table-2.js":false,"./icons/table-cells-merge.js":false,"./icons/table-cells-split.js":false,"./icons/table-columns-split.js":false,"./icons/table-of-contents.js":false,"./icons/table-properties.js":false,"./icons/table.js":false,"./icons/table-rows-split.js":false,"./icons/tablet-smartphone.js":false,"./icons/tablet.js":false,"./icons/tablets.js":false,"./icons/tag.js":false,"./icons/tags.js":false,"./icons/tally-1.js":false,"./icons/tally-2.js":false,"./icons/tally-3.js":false,"./icons/tally-4.js":false,"./icons/tally-5.js":false,"./icons/tangent.js":false,"./icons/target.js":false,"./icons/telescope.js":false,"./icons/tent-tree.js":false,"./icons/tent.js":false,"./icons/terminal.js":false,"./icons/test-tube.js":false,"./icons/test-tubes.js":false,"./icons/text-cursor-input.js":false,"./icons/text-cursor.js":false,"./icons/text-quote.js":false,"./icons/text-search.js":false,"./icons/theater.js":false,"./icons/thermometer-snowflake.js":false,"./icons/thermometer.js":false,"./icons/thumbs-down.js":false,"./icons/thermometer-sun.js":false,"./icons/thumbs-up.js":false,"./icons/ticket-check.js":false,"./icons/ticket-minus.js":false,"./icons/ticket-percent.js":false,"./icons/ticket-plus.js":false,"./icons/ticket-slash.js":false,"./icons/ticket.js":false,"./icons/ticket-x.js":false,"./icons/tickets-plane.js":false,"./icons/tickets.js":false,"./icons/timer-off.js":false,"./icons/timer-reset.js":false,"./icons/timer.js":false,"./icons/toggle-left.js":false,"./icons/toggle-right.js":false,"./icons/tool-case.js":false,"./icons/toilet.js":false,"./icons/tornado.js":false,"./icons/torus.js":false,"./icons/touchpad-off.js":false,"./icons/touchpad.js":false,"./icons/tower-control.js":false,"./icons/toy-brick.js":false,"./icons/tractor.js":false,"./icons/traffic-cone.js":false,"./icons/train-front-tunnel.js":false,"./icons/train-front.js":false,"./icons/train-track.js":false,"./icons/transgender.js":false,"./icons/trash-2.js":false,"./icons/trash.js":false,"./icons/tree-deciduous.js":false,"./icons/tree-pine.js":false,"./icons/trees.js":false,"./icons/trello.js":false,"./icons/trending-down.js":false,"./icons/trending-up-down.js":false,"./icons/trending-up.js":false,"./icons/triangle-dashed.js":false,"./icons/triangle-right.js":false,"./icons/triangle.js":false,"./icons/trophy.js":false,"./icons/truck-electric.js":false,"./icons/truck.js":false,"./icons/turkish-lira.js":false,"./icons/turntable.js":false,"./icons/turtle.js":false,"./icons/tv.js":false,"./icons/tv-minimal-play.js":false,"./icons/twitch.js":false,"./icons/twitter.js":false,"./icons/type-outline.js":false,"./icons/type.js":false,"./icons/umbrella.js":false,"./icons/umbrella-off.js":false,"./icons/underline.js":false,"./icons/undo-2.js":false,"./icons/undo-dot.js":false,"./icons/undo.js":false,"./icons/unfold-horizontal.js":false,"./icons/unfold-vertical.js":false,"./icons/ungroup.js":false,"./icons/unlink-2.js":false,"./icons/unlink.js":false,"./icons/unplug.js":false,"./icons/upload.js":false,"./icons/usb.js":false,"./icons/user-check.js":false,"./icons/user-cog.js":false,"./icons/user-lock.js":false,"./icons/user-minus.js":false,"./icons/user-pen.js":false,"./icons/user-plus.js":false,"./icons/user-round-pen.js":false,"./icons/user-round-search.js":false,"./icons/user-search.js":false,"./icons/user-star.js":false,"./icons/user-x.js":false,"./icons/user.js":false,"./icons/users.js":false,"./icons/utility-pole.js":false,"./icons/variable.js":false,"./icons/vault.js":false,"./icons/vector-square.js":false,"./icons/vegan.js":false,"./icons/venetian-mask.js":false,"./icons/venus-and-mars.js":false,"./icons/venus.js":false,"./icons/vibrate-off.js":false,"./icons/vibrate.js":false,"./icons/video-off.js":false,"./icons/video.js":false,"./icons/videotape.js":false,"./icons/voicemail.js":false,"./icons/view.js":false,"./icons/volleyball.js":false,"./icons/volume-2.js":false,"./icons/volume-1.js":false,"./icons/volume-off.js":false,"./icons/volume-x.js":false,"./icons/volume.js":false,"./icons/vote.js":false,"./icons/wallet-cards.js":false,"./icons/wallet.js":false,"./icons/wallpaper.js":false,"./icons/wand.js":false,"./icons/warehouse.js":false,"./icons/washing-machine.js":false,"./icons/watch.js":false,"./icons/waves-ladder.js":false,"./icons/waves.js":false,"./icons/waypoints.js":false,"./icons/webcam.js":false,"./icons/webhook-off.js":false,"./icons/webhook.js":false,"./icons/weight.js":false,"./icons/wheat-off.js":false,"./icons/wheat.js":false,"./icons/whole-word.js":false,"./icons/wifi-high.js":false,"./icons/wifi-cog.js":false,"./icons/wifi-low.js":false,"./icons/wifi-off.js":"9p2jF","./icons/wifi-pen.js":false,"./icons/wifi-sync.js":false,"./icons/wifi-zero.js":false,"./icons/wifi.js":"fbysy","./icons/wind-arrow-down.js":false,"./icons/wind.js":false,"./icons/wine-off.js":false,"./icons/wine.js":false,"./icons/workflow.js":false,"./icons/worm.js":false,"./icons/wrench.js":false,"./icons/x.js":"aJBqa","./icons/youtube.js":false,"./icons/zap-off.js":false,"./icons/zoom-in.js":false,"./icons/zap.js":"iMEtN","./icons/zoom-out.js":false,"./icons/arrow-down-0-1.js":false,"./icons/arrow-down-1-0.js":false,"./icons/arrow-up-0-1.js":false,"./icons/arrow-up-1-0.js":false,"./createLucideIcon.js":false,"./Icon.js":false,"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"7TcMZ":[function(require,module,exports,__globalThis) {
+},{"./icons/index.js":false,"./icons/alarm-clock-check.js":false,"./icons/alarm-clock-minus.js":false,"./icons/alarm-clock-plus.js":false,"./icons/arrow-down-a-z.js":false,"./icons/arrow-down-wide-narrow.js":false,"./icons/arrow-down-z-a.js":false,"./icons/arrow-up-a-z.js":false,"./icons/arrow-up-narrow-wide.js":false,"./icons/arrow-up-z-a.js":false,"./icons/axis-3d.js":false,"./icons/badge-check.js":false,"./icons/badge-question-mark.js":false,"./icons/between-horizontal-end.js":false,"./icons/between-horizontal-start.js":false,"./icons/book-dashed.js":false,"./icons/braces.js":false,"./icons/captions.js":false,"./icons/chart-area.js":false,"./icons/chart-bar-big.js":false,"./icons/chart-bar.js":false,"./icons/chart-candlestick.js":false,"./icons/chart-column-increasing.js":false,"./icons/chart-column-big.js":false,"./icons/chart-column.js":false,"./icons/chart-line.js":false,"./icons/chart-no-axes-column-increasing.js":false,"./icons/chart-no-axes-column.js":false,"./icons/chart-no-axes-gantt.js":false,"./icons/chart-pie.js":false,"./icons/chart-scatter.js":false,"./icons/chromium.js":false,"./icons/circle-alert.js":false,"./icons/circle-arrow-down.js":false,"./icons/circle-arrow-left.js":false,"./icons/circle-arrow-out-down-left.js":false,"./icons/circle-arrow-out-down-right.js":false,"./icons/circle-arrow-out-up-left.js":false,"./icons/circle-arrow-out-up-right.js":false,"./icons/circle-arrow-right.js":false,"./icons/circle-arrow-up.js":false,"./icons/circle-check-big.js":false,"./icons/circle-check.js":false,"./icons/circle-chevron-down.js":false,"./icons/circle-chevron-left.js":false,"./icons/circle-chevron-right.js":false,"./icons/circle-chevron-up.js":false,"./icons/circle-divide.js":false,"./icons/circle-gauge.js":false,"./icons/circle-minus.js":false,"./icons/circle-parking-off.js":false,"./icons/circle-parking.js":false,"./icons/circle-percent.js":false,"./icons/circle-pause.js":false,"./icons/circle-play.js":false,"./icons/circle-plus.js":false,"./icons/circle-power.js":false,"./icons/circle-question-mark.js":false,"./icons/circle-slash-2.js":false,"./icons/circle-user-round.js":false,"./icons/circle-stop.js":false,"./icons/circle-user.js":false,"./icons/circle-x.js":false,"./icons/clipboard-pen.js":false,"./icons/clipboard-pen-line.js":false,"./icons/cloud-download.js":false,"./icons/cloud-upload.js":false,"./icons/code-xml.js":false,"./icons/columns-2.js":false,"./icons/columns-3-cog.js":false,"./icons/columns-3.js":false,"./icons/contact-round.js":false,"./icons/diamond-percent.js":false,"./icons/earth.js":false,"./icons/ellipsis-vertical.js":false,"./icons/ellipsis.js":false,"./icons/file-axis-3d.js":false,"./icons/file-chart-column-increasing.js":false,"./icons/file-chart-column.js":false,"./icons/file-chart-line.js":false,"./icons/file-chart-pie.js":false,"./icons/file-cog.js":false,"./icons/file-pen-line.js":false,"./icons/file-pen.js":false,"./icons/file-play.js":false,"./icons/file-question-mark.js":false,"./icons/file-video-camera.js":false,"./icons/folder-cog.js":false,"./icons/folder-pen.js":false,"./icons/funnel-x.js":false,"./icons/funnel.js":false,"./icons/git-commit-horizontal.js":false,"./icons/grid-2x2-check.js":false,"./icons/grid-2x2-plus.js":false,"./icons/grid-2x2-x.js":false,"./icons/grid-2x2.js":false,"./icons/grid-3x3.js":"7TcMZ","./icons/hand-grab.js":false,"./icons/hand-helping.js":false,"./icons/house.js":false,"./icons/ice-cream-bowl.js":false,"./icons/ice-cream-cone.js":false,"./icons/laptop-minimal.js":false,"./icons/layers.js":false,"./icons/list-indent-decrease.js":false,"./icons/list-indent-increase.js":false,"./icons/loader-circle.js":false,"./icons/lock-keyhole-open.js":false,"./icons/lock-open.js":false,"./icons/mail-question-mark.js":false,"./icons/map-pin-pen.js":false,"./icons/message-circle-question-mark.js":false,"./icons/mic-vocal.js":false,"./icons/move-3d.js":false,"./icons/octagon-alert.js":false,"./icons/octagon-pause.js":false,"./icons/octagon-x.js":false,"./icons/paintbrush-vertical.js":false,"./icons/panel-left-close.js":false,"./icons/panel-bottom-dashed.js":false,"./icons/panel-left-dashed.js":false,"./icons/panel-left-open.js":false,"./icons/panel-left.js":false,"./icons/panel-right-dashed.js":false,"./icons/panel-top-dashed.js":false,"./icons/panels-top-left.js":false,"./icons/pen.js":false,"./icons/pen-line.js":false,"./icons/plug-zap.js":false,"./icons/rectangle-ellipsis.js":false,"./icons/rotate-3d.js":false,"./icons/rows-3.js":false,"./icons/rows-2.js":false,"./icons/scale-3d.js":false,"./icons/send-horizontal.js":false,"./icons/shield-question-mark.js":false,"./icons/shield-x.js":false,"./icons/sliders-vertical.js":false,"./icons/sparkles.js":false,"./icons/square-activity.js":false,"./icons/square-arrow-down-left.js":false,"./icons/square-arrow-down-right.js":false,"./icons/square-arrow-down.js":false,"./icons/square-arrow-left.js":false,"./icons/square-arrow-out-down-left.js":false,"./icons/square-arrow-out-down-right.js":false,"./icons/square-arrow-out-up-left.js":false,"./icons/square-arrow-out-up-right.js":false,"./icons/square-arrow-right.js":false,"./icons/square-arrow-up-left.js":false,"./icons/square-arrow-up-right.js":false,"./icons/square-arrow-up.js":false,"./icons/square-asterisk.js":false,"./icons/square-bottom-dashed-scissors.js":false,"./icons/square-check-big.js":false,"./icons/square-chart-gantt.js":false,"./icons/square-check.js":false,"./icons/square-chevron-left.js":false,"./icons/square-chevron-down.js":false,"./icons/square-chevron-right.js":false,"./icons/square-code.js":false,"./icons/square-chevron-up.js":false,"./icons/square-dashed-kanban.js":false,"./icons/square-dashed.js":false,"./icons/square-dashed-mouse-pointer.js":false,"./icons/square-divide.js":false,"./icons/square-dot.js":false,"./icons/square-equal.js":false,"./icons/square-function.js":false,"./icons/square-kanban.js":false,"./icons/square-library.js":false,"./icons/square-m.js":false,"./icons/square-menu.js":false,"./icons/square-mouse-pointer.js":false,"./icons/square-minus.js":false,"./icons/square-parking-off.js":false,"./icons/square-parking.js":false,"./icons/square-pen.js":false,"./icons/square-percent.js":false,"./icons/square-pi.js":false,"./icons/square-pilcrow.js":false,"./icons/square-play.js":false,"./icons/square-plus.js":false,"./icons/square-scissors.js":false,"./icons/square-power.js":false,"./icons/square-sigma.js":false,"./icons/square-slash.js":false,"./icons/square-split-vertical.js":false,"./icons/square-split-horizontal.js":false,"./icons/square-terminal.js":false,"./icons/square-user-round.js":false,"./icons/square-user.js":false,"./icons/square-x.js":false,"./icons/test-tube-diagonal.js":false,"./icons/text-align-center.js":false,"./icons/text-align-end.js":false,"./icons/text-align-justify.js":false,"./icons/text-align-start.js":false,"./icons/text-initial.js":false,"./icons/text-select.js":false,"./icons/text-wrap.js":false,"./icons/tram-front.js":false,"./icons/tree-palm.js":false,"./icons/triangle-alert.js":false,"./icons/tv-minimal.js":false,"./icons/university.js":false,"./icons/user-round-check.js":false,"./icons/user-round-cog.js":false,"./icons/user-round-plus.js":false,"./icons/user-round-minus.js":false,"./icons/user-round-x.js":false,"./icons/user-round.js":false,"./icons/users-round.js":false,"./icons/utensils-crossed.js":false,"./icons/utensils.js":false,"./icons/wallet-minimal.js":false,"./icons/wand-sparkles.js":false,"./icons/a-arrow-down.js":false,"./icons/a-arrow-up.js":false,"./icons/a-large-small.js":false,"./icons/accessibility.js":false,"./icons/activity.js":false,"./icons/air-vent.js":false,"./icons/airplay.js":false,"./icons/alarm-clock-off.js":false,"./icons/alarm-clock.js":false,"./icons/alarm-smoke.js":false,"./icons/align-center-horizontal.js":false,"./icons/album.js":false,"./icons/align-center-vertical.js":false,"./icons/align-end-horizontal.js":false,"./icons/align-end-vertical.js":false,"./icons/align-horizontal-distribute-center.js":false,"./icons/align-horizontal-distribute-end.js":false,"./icons/align-horizontal-distribute-start.js":false,"./icons/align-horizontal-justify-center.js":false,"./icons/align-horizontal-justify-end.js":false,"./icons/align-horizontal-justify-start.js":false,"./icons/align-horizontal-space-around.js":false,"./icons/align-horizontal-space-between.js":false,"./icons/align-start-horizontal.js":false,"./icons/align-start-vertical.js":false,"./icons/align-vertical-distribute-center.js":false,"./icons/align-vertical-distribute-end.js":false,"./icons/align-vertical-justify-center.js":false,"./icons/align-vertical-justify-end.js":false,"./icons/align-vertical-distribute-start.js":false,"./icons/align-vertical-justify-start.js":false,"./icons/align-vertical-space-around.js":false,"./icons/align-vertical-space-between.js":false,"./icons/ambulance.js":false,"./icons/ampersand.js":false,"./icons/ampersands.js":false,"./icons/amphora.js":false,"./icons/anchor.js":false,"./icons/angry.js":false,"./icons/annoyed.js":false,"./icons/antenna.js":false,"./icons/anvil.js":false,"./icons/aperture.js":false,"./icons/app-window.js":false,"./icons/app-window-mac.js":false,"./icons/apple.js":false,"./icons/archive-restore.js":false,"./icons/archive-x.js":false,"./icons/archive.js":false,"./icons/armchair.js":false,"./icons/arrow-big-down-dash.js":false,"./icons/arrow-big-left-dash.js":false,"./icons/arrow-big-left.js":false,"./icons/arrow-big-right-dash.js":false,"./icons/arrow-big-down.js":false,"./icons/arrow-big-right.js":false,"./icons/arrow-big-up-dash.js":false,"./icons/arrow-big-up.js":false,"./icons/arrow-down-left.js":false,"./icons/arrow-down-from-line.js":false,"./icons/arrow-down-narrow-wide.js":false,"./icons/arrow-down-to-dot.js":false,"./icons/arrow-down-right.js":false,"./icons/arrow-down-to-line.js":false,"./icons/arrow-down-up.js":false,"./icons/arrow-down.js":false,"./icons/arrow-left-from-line.js":false,"./icons/arrow-left-right.js":false,"./icons/arrow-left-to-line.js":false,"./icons/arrow-left.js":false,"./icons/arrow-right-from-line.js":false,"./icons/arrow-right-left.js":false,"./icons/arrow-right-to-line.js":false,"./icons/arrow-right.js":false,"./icons/arrow-up-down.js":false,"./icons/arrow-up-from-dot.js":false,"./icons/arrow-up-from-line.js":false,"./icons/arrow-up-left.js":false,"./icons/arrow-up-right.js":false,"./icons/arrow-up-to-line.js":false,"./icons/arrow-up-wide-narrow.js":false,"./icons/arrow-up.js":false,"./icons/asterisk.js":false,"./icons/arrows-up-from-line.js":false,"./icons/at-sign.js":false,"./icons/audio-waveform.js":false,"./icons/atom.js":false,"./icons/audio-lines.js":false,"./icons/award.js":false,"./icons/axe.js":false,"./icons/baby.js":false,"./icons/backpack.js":false,"./icons/badge-alert.js":false,"./icons/badge-cent.js":false,"./icons/badge-dollar-sign.js":false,"./icons/badge-euro.js":false,"./icons/badge-indian-rupee.js":false,"./icons/badge-info.js":false,"./icons/badge-japanese-yen.js":false,"./icons/badge-minus.js":false,"./icons/badge-plus.js":false,"./icons/badge-percent.js":false,"./icons/badge-pound-sterling.js":false,"./icons/badge-russian-ruble.js":false,"./icons/badge-swiss-franc.js":false,"./icons/badge-turkish-lira.js":false,"./icons/badge-x.js":false,"./icons/badge.js":false,"./icons/baggage-claim.js":false,"./icons/ban.js":false,"./icons/banana.js":false,"./icons/banknote-arrow-down.js":false,"./icons/bandage.js":false,"./icons/banknote-arrow-up.js":false,"./icons/banknote.js":false,"./icons/banknote-x.js":false,"./icons/barcode.js":false,"./icons/barrel.js":false,"./icons/baseline.js":false,"./icons/battery-charging.js":false,"./icons/battery-full.js":false,"./icons/battery-low.js":false,"./icons/bath.js":false,"./icons/battery-medium.js":false,"./icons/battery-plus.js":false,"./icons/battery.js":false,"./icons/battery-warning.js":false,"./icons/beaker.js":false,"./icons/bean-off.js":false,"./icons/bean.js":false,"./icons/bed-double.js":false,"./icons/bed-single.js":false,"./icons/bed.js":false,"./icons/beef.js":false,"./icons/beer-off.js":false,"./icons/beer.js":false,"./icons/bell-dot.js":false,"./icons/bell-electric.js":false,"./icons/bell-minus.js":false,"./icons/bell-off.js":false,"./icons/bell-plus.js":false,"./icons/bell-ring.js":false,"./icons/bell.js":false,"./icons/between-vertical-end.js":false,"./icons/biceps-flexed.js":false,"./icons/between-vertical-start.js":false,"./icons/bike.js":false,"./icons/binary.js":false,"./icons/binoculars.js":false,"./icons/bird.js":false,"./icons/bitcoin.js":false,"./icons/biohazard.js":false,"./icons/blend.js":false,"./icons/blinds.js":false,"./icons/blocks.js":false,"./icons/bluetooth-connected.js":false,"./icons/bluetooth-off.js":false,"./icons/bluetooth.js":false,"./icons/bluetooth-searching.js":false,"./icons/bold.js":false,"./icons/bolt.js":false,"./icons/bomb.js":false,"./icons/bone.js":false,"./icons/book-a.js":false,"./icons/book-alert.js":false,"./icons/book-audio.js":false,"./icons/book-check.js":false,"./icons/book-copy.js":false,"./icons/book-down.js":false,"./icons/book-headphones.js":false,"./icons/book-heart.js":false,"./icons/book-image.js":false,"./icons/book-key.js":false,"./icons/book-lock.js":false,"./icons/book-marked.js":false,"./icons/book-minus.js":false,"./icons/book-open-text.js":false,"./icons/book-open-check.js":false,"./icons/book-open.js":false,"./icons/book-plus.js":false,"./icons/book-text.js":false,"./icons/book-up-2.js":false,"./icons/book-type.js":false,"./icons/book-up.js":false,"./icons/book-user.js":false,"./icons/book-x.js":false,"./icons/book.js":false,"./icons/bookmark-check.js":false,"./icons/bookmark-minus.js":false,"./icons/bookmark-x.js":false,"./icons/bookmark-plus.js":false,"./icons/bookmark.js":false,"./icons/boom-box.js":false,"./icons/bot-message-square.js":false,"./icons/bot-off.js":false,"./icons/bot.js":"64nbc","./icons/bottle-wine.js":false,"./icons/bow-arrow.js":false,"./icons/box.js":"bjZeW","./icons/boxes.js":false,"./icons/brackets.js":false,"./icons/brain-circuit.js":false,"./icons/brain-cog.js":false,"./icons/brain.js":false,"./icons/brick-wall-fire.js":false,"./icons/brick-wall.js":false,"./icons/brick-wall-shield.js":false,"./icons/briefcase-business.js":false,"./icons/briefcase-medical.js":false,"./icons/briefcase-conveyor-belt.js":false,"./icons/briefcase.js":false,"./icons/bring-to-front.js":false,"./icons/brush-cleaning.js":false,"./icons/bubbles.js":false,"./icons/bug-off.js":false,"./icons/brush.js":false,"./icons/bug-play.js":false,"./icons/bug.js":false,"./icons/building-2.js":false,"./icons/bus-front.js":false,"./icons/building.js":false,"./icons/bus.js":false,"./icons/cable-car.js":false,"./icons/cable.js":false,"./icons/calculator.js":false,"./icons/cake-slice.js":false,"./icons/cake.js":false,"./icons/calendar-1.js":false,"./icons/calendar-arrow-down.js":false,"./icons/calendar-arrow-up.js":false,"./icons/calendar-check.js":false,"./icons/calendar-clock.js":false,"./icons/calendar-check-2.js":false,"./icons/calendar-cog.js":false,"./icons/calendar-days.js":false,"./icons/calendar-heart.js":false,"./icons/calendar-fold.js":false,"./icons/calendar-minus-2.js":false,"./icons/calendar-off.js":false,"./icons/calendar-minus.js":false,"./icons/calendar-plus-2.js":false,"./icons/calendar-plus.js":false,"./icons/calendar-range.js":false,"./icons/calendar-sync.js":false,"./icons/calendar-x-2.js":false,"./icons/calendar-search.js":false,"./icons/calendar.js":false,"./icons/calendar-x.js":false,"./icons/camera-off.js":false,"./icons/camera.js":false,"./icons/candy-cane.js":false,"./icons/candy-off.js":false,"./icons/cannabis.js":false,"./icons/candy.js":false,"./icons/captions-off.js":false,"./icons/car-front.js":false,"./icons/car-taxi-front.js":false,"./icons/car.js":false,"./icons/caravan.js":false,"./icons/card-sim.js":false,"./icons/carrot.js":false,"./icons/case-lower.js":false,"./icons/case-sensitive.js":false,"./icons/case-upper.js":false,"./icons/cassette-tape.js":false,"./icons/cast.js":false,"./icons/castle.js":false,"./icons/cat.js":false,"./icons/cctv.js":false,"./icons/chart-bar-decreasing.js":false,"./icons/chart-bar-increasing.js":false,"./icons/chart-bar-stacked.js":false,"./icons/chart-column-decreasing.js":false,"./icons/chart-column-stacked.js":false,"./icons/chart-gantt.js":false,"./icons/chart-network.js":false,"./icons/chart-no-axes-column-decreasing.js":false,"./icons/chart-no-axes-combined.js":false,"./icons/chart-spline.js":false,"./icons/check-check.js":false,"./icons/check-line.js":false,"./icons/check.js":"irEtD","./icons/chef-hat.js":false,"./icons/cherry.js":false,"./icons/chevron-first.js":false,"./icons/chevron-last.js":false,"./icons/chevron-down.js":false,"./icons/chevron-left.js":false,"./icons/chevron-right.js":false,"./icons/chevron-up.js":false,"./icons/chevrons-down-up.js":false,"./icons/chevrons-down.js":false,"./icons/chevrons-left-right-ellipsis.js":false,"./icons/chevrons-left-right.js":false,"./icons/chevrons-left.js":false,"./icons/chevrons-right-left.js":false,"./icons/chevrons-right.js":false,"./icons/chevrons-up-down.js":false,"./icons/chevrons-up.js":false,"./icons/church.js":false,"./icons/cigarette-off.js":false,"./icons/cigarette.js":false,"./icons/circle-dashed.js":false,"./icons/circle-dollar-sign.js":false,"./icons/circle-dot-dashed.js":false,"./icons/circle-dot.js":false,"./icons/circle-ellipsis.js":false,"./icons/circle-equal.js":false,"./icons/circle-fading-arrow-up.js":false,"./icons/circle-fading-plus.js":false,"./icons/circle-off.js":false,"./icons/circle-pound-sterling.js":false,"./icons/circle-slash.js":false,"./icons/circle-small.js":false,"./icons/circle-star.js":false,"./icons/circle.js":false,"./icons/circuit-board.js":"fT7sK","./icons/citrus.js":false,"./icons/clapperboard.js":false,"./icons/clipboard-check.js":false,"./icons/clipboard-clock.js":false,"./icons/clipboard-copy.js":false,"./icons/clipboard-list.js":false,"./icons/clipboard-minus.js":false,"./icons/clipboard-paste.js":false,"./icons/clipboard-plus.js":false,"./icons/clipboard-type.js":false,"./icons/clipboard-x.js":false,"./icons/clipboard.js":false,"./icons/clock-1.js":false,"./icons/clock-10.js":false,"./icons/clock-11.js":false,"./icons/clock-12.js":false,"./icons/clock-2.js":false,"./icons/clock-3.js":false,"./icons/clock-4.js":false,"./icons/clock-5.js":false,"./icons/clock-6.js":false,"./icons/clock-7.js":false,"./icons/clock-8.js":false,"./icons/clock-9.js":false,"./icons/clock-alert.js":false,"./icons/clock-arrow-down.js":false,"./icons/clock-arrow-up.js":false,"./icons/clock-fading.js":false,"./icons/clock.js":false,"./icons/clock-plus.js":false,"./icons/closed-caption.js":false,"./icons/cloud-alert.js":false,"./icons/cloud-cog.js":false,"./icons/cloud-check.js":false,"./icons/cloud-drizzle.js":false,"./icons/cloud-fog.js":false,"./icons/cloud-lightning.js":false,"./icons/cloud-moon-rain.js":false,"./icons/cloud-hail.js":false,"./icons/cloud-moon.js":false,"./icons/cloud-off.js":false,"./icons/cloud-rain-wind.js":false,"./icons/cloud-rain.js":false,"./icons/cloud-snow.js":false,"./icons/cloud-sun-rain.js":false,"./icons/cloud-sun.js":false,"./icons/cloud.js":false,"./icons/cloudy.js":false,"./icons/clover.js":false,"./icons/club.js":false,"./icons/code.js":false,"./icons/codepen.js":false,"./icons/coffee.js":false,"./icons/codesandbox.js":false,"./icons/cog.js":"csH05","./icons/coins.js":false,"./icons/columns-4.js":false,"./icons/combine.js":false,"./icons/command.js":false,"./icons/compass.js":false,"./icons/component.js":false,"./icons/computer.js":false,"./icons/concierge-bell.js":false,"./icons/cone.js":false,"./icons/construction.js":false,"./icons/contact.js":false,"./icons/container.js":false,"./icons/contrast.js":false,"./icons/cookie.js":false,"./icons/cooking-pot.js":false,"./icons/copy-check.js":false,"./icons/copy-minus.js":false,"./icons/copy-plus.js":false,"./icons/copy-x.js":false,"./icons/copy-slash.js":false,"./icons/copy.js":"h8FFa","./icons/copyleft.js":false,"./icons/copyright.js":false,"./icons/corner-down-left.js":false,"./icons/corner-down-right.js":false,"./icons/corner-left-down.js":false,"./icons/corner-left-up.js":false,"./icons/corner-right-down.js":false,"./icons/corner-right-up.js":false,"./icons/corner-up-left.js":false,"./icons/corner-up-right.js":false,"./icons/cpu.js":"achTd","./icons/credit-card.js":false,"./icons/creative-commons.js":false,"./icons/croissant.js":false,"./icons/crop.js":false,"./icons/cross.js":false,"./icons/crosshair.js":false,"./icons/crown.js":false,"./icons/cuboid.js":false,"./icons/cup-soda.js":false,"./icons/currency.js":false,"./icons/cylinder.js":false,"./icons/dam.js":false,"./icons/database-zap.js":false,"./icons/database-backup.js":false,"./icons/database.js":false,"./icons/decimals-arrow-left.js":false,"./icons/decimals-arrow-right.js":false,"./icons/delete.js":false,"./icons/dessert.js":false,"./icons/diameter.js":false,"./icons/diamond-minus.js":false,"./icons/diamond-plus.js":false,"./icons/diamond.js":false,"./icons/dice-1.js":false,"./icons/dice-2.js":false,"./icons/dice-3.js":false,"./icons/dice-4.js":false,"./icons/dice-5.js":false,"./icons/dice-6.js":false,"./icons/dices.js":false,"./icons/diff.js":false,"./icons/disc-2.js":false,"./icons/disc-3.js":false,"./icons/disc-album.js":false,"./icons/disc.js":false,"./icons/divide.js":false,"./icons/dna.js":false,"./icons/dna-off.js":false,"./icons/dock.js":false,"./icons/dog.js":false,"./icons/dollar-sign.js":false,"./icons/donut.js":false,"./icons/door-closed-locked.js":false,"./icons/door-closed.js":false,"./icons/door-open.js":false,"./icons/dot.js":false,"./icons/download.js":false,"./icons/drafting-compass.js":false,"./icons/drama.js":false,"./icons/drill.js":false,"./icons/dribbble.js":false,"./icons/drone.js":false,"./icons/droplet-off.js":false,"./icons/droplet.js":false,"./icons/droplets.js":false,"./icons/drum.js":false,"./icons/drumstick.js":false,"./icons/dumbbell.js":false,"./icons/ear-off.js":false,"./icons/ear.js":false,"./icons/earth-lock.js":false,"./icons/eclipse.js":false,"./icons/egg-fried.js":false,"./icons/egg-off.js":false,"./icons/egg.js":false,"./icons/equal-approximately.js":false,"./icons/equal-not.js":false,"./icons/equal.js":false,"./icons/eraser.js":false,"./icons/ethernet-port.js":false,"./icons/euro.js":false,"./icons/ev-charger.js":false,"./icons/expand.js":false,"./icons/external-link.js":false,"./icons/eye-closed.js":false,"./icons/eye-off.js":false,"./icons/eye.js":false,"./icons/facebook.js":false,"./icons/fast-forward.js":false,"./icons/factory.js":false,"./icons/fan.js":false,"./icons/feather.js":false,"./icons/fence.js":false,"./icons/ferris-wheel.js":false,"./icons/figma.js":false,"./icons/file-audio-2.js":false,"./icons/file-archive.js":false,"./icons/file-audio.js":false,"./icons/file-badge-2.js":false,"./icons/file-badge.js":false,"./icons/file-box.js":false,"./icons/file-check-2.js":false,"./icons/file-check.js":false,"./icons/file-clock.js":false,"./icons/file-code-2.js":false,"./icons/file-code.js":false,"./icons/file-diff.js":false,"./icons/file-digit.js":false,"./icons/file-down.js":false,"./icons/file-heart.js":false,"./icons/file-input.js":false,"./icons/file-image.js":false,"./icons/file-json.js":false,"./icons/file-json-2.js":false,"./icons/file-key-2.js":false,"./icons/file-key.js":false,"./icons/file-lock-2.js":false,"./icons/file-lock.js":false,"./icons/file-minus-2.js":false,"./icons/file-minus.js":false,"./icons/file-music.js":false,"./icons/file-output.js":false,"./icons/file-plus-2.js":false,"./icons/file-plus.js":false,"./icons/file-scan.js":false,"./icons/file-search-2.js":false,"./icons/file-search.js":false,"./icons/file-sliders.js":false,"./icons/file-spreadsheet.js":false,"./icons/file-stack.js":false,"./icons/file-symlink.js":false,"./icons/file-terminal.js":false,"./icons/file-text.js":false,"./icons/file-type-2.js":false,"./icons/file-type.js":false,"./icons/file-up.js":false,"./icons/file-volume-2.js":false,"./icons/file-volume.js":false,"./icons/file-user.js":false,"./icons/file-warning.js":false,"./icons/file-x-2.js":false,"./icons/file-x.js":false,"./icons/file.js":false,"./icons/files.js":false,"./icons/film.js":false,"./icons/fingerprint.js":false,"./icons/fish-off.js":false,"./icons/fire-extinguisher.js":false,"./icons/fish-symbol.js":false,"./icons/fish.js":false,"./icons/flag-off.js":false,"./icons/flag-triangle-left.js":false,"./icons/flag.js":false,"./icons/flag-triangle-right.js":false,"./icons/flame-kindling.js":false,"./icons/flame.js":false,"./icons/flashlight-off.js":false,"./icons/flashlight.js":false,"./icons/flask-conical-off.js":false,"./icons/flask-conical.js":false,"./icons/flask-round.js":false,"./icons/flip-horizontal.js":false,"./icons/flip-horizontal-2.js":false,"./icons/flip-vertical-2.js":false,"./icons/flip-vertical.js":false,"./icons/flower-2.js":false,"./icons/flower.js":false,"./icons/focus.js":false,"./icons/fold-horizontal.js":false,"./icons/fold-vertical.js":false,"./icons/folder-archive.js":false,"./icons/folder-check.js":false,"./icons/folder-clock.js":false,"./icons/folder-closed.js":false,"./icons/folder-code.js":false,"./icons/folder-dot.js":false,"./icons/folder-down.js":false,"./icons/folder-git-2.js":false,"./icons/folder-git.js":false,"./icons/folder-heart.js":false,"./icons/folder-kanban.js":false,"./icons/folder-input.js":false,"./icons/folder-key.js":false,"./icons/folder-lock.js":false,"./icons/folder-minus.js":false,"./icons/folder-open-dot.js":false,"./icons/folder-open.js":false,"./icons/folder-output.js":false,"./icons/folder-plus.js":false,"./icons/folder-root.js":false,"./icons/folder-search-2.js":false,"./icons/folder-search.js":false,"./icons/folder-symlink.js":false,"./icons/folder-sync.js":false,"./icons/folder-tree.js":false,"./icons/folder-up.js":false,"./icons/folder-x.js":false,"./icons/folders.js":false,"./icons/folder.js":false,"./icons/footprints.js":false,"./icons/forklift.js":false,"./icons/forward.js":false,"./icons/frame.js":false,"./icons/framer.js":false,"./icons/frown.js":false,"./icons/fuel.js":false,"./icons/fullscreen.js":false,"./icons/funnel-plus.js":false,"./icons/gallery-horizontal-end.js":false,"./icons/gallery-horizontal.js":false,"./icons/gallery-thumbnails.js":false,"./icons/gallery-vertical-end.js":false,"./icons/gallery-vertical.js":false,"./icons/gamepad-2.js":false,"./icons/gauge.js":false,"./icons/gamepad.js":false,"./icons/gavel.js":false,"./icons/gem.js":false,"./icons/georgian-lari.js":false,"./icons/ghost.js":false,"./icons/gift.js":false,"./icons/git-branch-plus.js":false,"./icons/git-commit-vertical.js":false,"./icons/git-branch.js":false,"./icons/git-compare-arrows.js":false,"./icons/git-compare.js":false,"./icons/git-fork.js":false,"./icons/git-graph.js":false,"./icons/git-merge.js":false,"./icons/git-pull-request-arrow.js":false,"./icons/git-pull-request-closed.js":false,"./icons/git-pull-request-create-arrow.js":false,"./icons/git-pull-request-create.js":false,"./icons/git-pull-request-draft.js":false,"./icons/git-pull-request.js":false,"./icons/github.js":false,"./icons/gitlab.js":false,"./icons/glasses.js":false,"./icons/glass-water.js":false,"./icons/globe-lock.js":false,"./icons/globe.js":false,"./icons/goal.js":false,"./icons/gpu.js":false,"./icons/graduation-cap.js":false,"./icons/grape.js":false,"./icons/grid-3x2.js":false,"./icons/grip-horizontal.js":false,"./icons/grip-vertical.js":false,"./icons/group.js":false,"./icons/grip.js":false,"./icons/guitar.js":false,"./icons/ham.js":false,"./icons/hamburger.js":false,"./icons/hammer.js":false,"./icons/hand-coins.js":false,"./icons/hand-fist.js":false,"./icons/hand-heart.js":false,"./icons/hand-metal.js":false,"./icons/hand-platter.js":false,"./icons/hand.js":false,"./icons/handbag.js":false,"./icons/handshake.js":false,"./icons/hard-drive-download.js":false,"./icons/hard-drive-upload.js":false,"./icons/hard-drive.js":false,"./icons/hard-hat.js":false,"./icons/hash.js":false,"./icons/hat-glasses.js":false,"./icons/haze.js":false,"./icons/heading-1.js":false,"./icons/heading-2.js":false,"./icons/hdmi-port.js":false,"./icons/heading-3.js":false,"./icons/heading-4.js":false,"./icons/heading-5.js":false,"./icons/heading-6.js":false,"./icons/heading.js":false,"./icons/headphone-off.js":false,"./icons/headphones.js":false,"./icons/headset.js":false,"./icons/heart-crack.js":false,"./icons/heart-minus.js":false,"./icons/heart-handshake.js":false,"./icons/heart-off.js":false,"./icons/heart-plus.js":false,"./icons/heart-pulse.js":false,"./icons/heart.js":false,"./icons/heater.js":false,"./icons/hexagon.js":false,"./icons/highlighter.js":false,"./icons/history.js":false,"./icons/hop-off.js":false,"./icons/hop.js":false,"./icons/hospital.js":false,"./icons/hotel.js":false,"./icons/hourglass.js":false,"./icons/house-heart.js":false,"./icons/house-plug.js":false,"./icons/house-plus.js":false,"./icons/house-wifi.js":false,"./icons/id-card-lanyard.js":false,"./icons/id-card.js":false,"./icons/image-down.js":false,"./icons/image-minus.js":false,"./icons/image-off.js":false,"./icons/image-play.js":false,"./icons/image-plus.js":false,"./icons/image-up.js":false,"./icons/image-upscale.js":false,"./icons/images.js":false,"./icons/image.js":false,"./icons/import.js":false,"./icons/inbox.js":false,"./icons/indian-rupee.js":false,"./icons/infinity.js":false,"./icons/info.js":false,"./icons/inspection-panel.js":false,"./icons/instagram.js":false,"./icons/italic.js":false,"./icons/iteration-cw.js":false,"./icons/iteration-ccw.js":false,"./icons/japanese-yen.js":false,"./icons/joystick.js":false,"./icons/kanban.js":false,"./icons/kayak.js":false,"./icons/key-round.js":false,"./icons/key-square.js":false,"./icons/key.js":false,"./icons/keyboard-music.js":false,"./icons/keyboard-off.js":false,"./icons/keyboard.js":false,"./icons/lamp-ceiling.js":false,"./icons/lamp-desk.js":false,"./icons/lamp-wall-down.js":false,"./icons/lamp-floor.js":false,"./icons/lamp-wall-up.js":false,"./icons/lamp.js":false,"./icons/land-plot.js":false,"./icons/landmark.js":false,"./icons/laptop-minimal-check.js":false,"./icons/languages.js":false,"./icons/laptop.js":false,"./icons/lasso-select.js":false,"./icons/lasso.js":false,"./icons/laugh.js":false,"./icons/layers-2.js":false,"./icons/layout-dashboard.js":false,"./icons/layout-grid.js":false,"./icons/layout-list.js":false,"./icons/layout-panel-left.js":false,"./icons/layout-panel-top.js":false,"./icons/layout-template.js":false,"./icons/leaf.js":false,"./icons/leafy-green.js":false,"./icons/lectern.js":false,"./icons/life-buoy.js":false,"./icons/library-big.js":false,"./icons/ligature.js":false,"./icons/library.js":false,"./icons/lightbulb-off.js":false,"./icons/lightbulb.js":false,"./icons/link-2-off.js":false,"./icons/line-squiggle.js":false,"./icons/link-2.js":false,"./icons/link.js":false,"./icons/linkedin.js":false,"./icons/list-check.js":false,"./icons/list-checks.js":false,"./icons/list-chevrons-down-up.js":false,"./icons/list-chevrons-up-down.js":false,"./icons/list-collapse.js":false,"./icons/list-end.js":false,"./icons/list-filter-plus.js":false,"./icons/list-filter.js":false,"./icons/list-minus.js":false,"./icons/list-music.js":false,"./icons/list-ordered.js":false,"./icons/list-plus.js":false,"./icons/list-restart.js":false,"./icons/list-start.js":false,"./icons/list-todo.js":false,"./icons/list-tree.js":false,"./icons/list-video.js":false,"./icons/list-x.js":false,"./icons/list.js":false,"./icons/loader-pinwheel.js":false,"./icons/loader.js":false,"./icons/locate-fixed.js":false,"./icons/locate-off.js":false,"./icons/locate.js":false,"./icons/lock-keyhole.js":false,"./icons/lock.js":false,"./icons/log-in.js":false,"./icons/log-out.js":false,"./icons/logs.js":false,"./icons/lollipop.js":false,"./icons/luggage.js":false,"./icons/magnet.js":false,"./icons/mail-check.js":false,"./icons/mail-open.js":false,"./icons/mail-minus.js":false,"./icons/mail-plus.js":false,"./icons/mail-search.js":false,"./icons/mail-warning.js":false,"./icons/mail-x.js":false,"./icons/mail.js":false,"./icons/mailbox.js":false,"./icons/mails.js":false,"./icons/map-minus.js":false,"./icons/map-pin-check-inside.js":false,"./icons/map-pin-check.js":false,"./icons/map-pin-house.js":false,"./icons/map-pin-minus-inside.js":false,"./icons/map-pin-minus.js":false,"./icons/map-pin-off.js":false,"./icons/map-pin-plus.js":false,"./icons/map-pin-plus-inside.js":false,"./icons/map-pin-x-inside.js":false,"./icons/map-pin-x.js":false,"./icons/map-pin.js":false,"./icons/map-pinned.js":false,"./icons/map-plus.js":false,"./icons/mars-stroke.js":false,"./icons/map.js":false,"./icons/mars.js":false,"./icons/martini.js":false,"./icons/maximize-2.js":false,"./icons/maximize.js":false,"./icons/medal.js":false,"./icons/megaphone.js":false,"./icons/megaphone-off.js":false,"./icons/meh.js":false,"./icons/memory-stick.js":false,"./icons/menu.js":false,"./icons/merge.js":false,"./icons/message-circle-code.js":false,"./icons/message-circle-dashed.js":false,"./icons/message-circle-heart.js":false,"./icons/message-circle-off.js":false,"./icons/message-circle-more.js":false,"./icons/message-circle-plus.js":false,"./icons/message-circle-reply.js":false,"./icons/message-circle-warning.js":false,"./icons/message-circle-x.js":false,"./icons/message-circle.js":false,"./icons/message-square-code.js":false,"./icons/message-square-dashed.js":false,"./icons/message-square-diff.js":false,"./icons/message-square-lock.js":false,"./icons/message-square-dot.js":false,"./icons/message-square-heart.js":false,"./icons/message-square-more.js":false,"./icons/message-square-plus.js":false,"./icons/message-square-off.js":false,"./icons/message-square-quote.js":false,"./icons/message-square-reply.js":false,"./icons/message-square-share.js":false,"./icons/message-square-text.js":false,"./icons/message-square-warning.js":false,"./icons/message-square-x.js":false,"./icons/message-square.js":false,"./icons/messages-square.js":false,"./icons/mic-off.js":false,"./icons/mic.js":false,"./icons/microchip.js":false,"./icons/microwave.js":false,"./icons/milestone.js":false,"./icons/microscope.js":false,"./icons/milk-off.js":false,"./icons/minimize-2.js":false,"./icons/milk.js":false,"./icons/minimize.js":false,"./icons/monitor-check.js":false,"./icons/minus.js":false,"./icons/monitor-cog.js":false,"./icons/monitor-dot.js":false,"./icons/monitor-down.js":false,"./icons/monitor-off.js":false,"./icons/monitor-pause.js":false,"./icons/monitor-smartphone.js":false,"./icons/monitor-play.js":false,"./icons/monitor-speaker.js":false,"./icons/monitor-stop.js":false,"./icons/monitor-up.js":false,"./icons/monitor-x.js":false,"./icons/monitor.js":false,"./icons/moon-star.js":false,"./icons/motorbike.js":false,"./icons/moon.js":false,"./icons/mountain.js":false,"./icons/mountain-snow.js":false,"./icons/mouse-pointer-2.js":false,"./icons/mouse-off.js":false,"./icons/mouse-pointer-ban.js":false,"./icons/mouse-pointer-click.js":false,"./icons/mouse-pointer.js":false,"./icons/mouse.js":false,"./icons/move-diagonal-2.js":false,"./icons/move-diagonal.js":false,"./icons/move-down-left.js":false,"./icons/move-down-right.js":false,"./icons/move-horizontal.js":false,"./icons/move-down.js":false,"./icons/move-left.js":false,"./icons/move-right.js":false,"./icons/move-up-right.js":false,"./icons/move-up-left.js":false,"./icons/move-up.js":false,"./icons/move.js":false,"./icons/move-vertical.js":false,"./icons/music-2.js":false,"./icons/music-3.js":false,"./icons/music-4.js":false,"./icons/music.js":false,"./icons/navigation-2.js":false,"./icons/navigation-off.js":false,"./icons/navigation-2-off.js":false,"./icons/navigation.js":false,"./icons/network.js":false,"./icons/newspaper.js":false,"./icons/nfc.js":false,"./icons/non-binary.js":false,"./icons/notebook-pen.js":false,"./icons/notebook-tabs.js":false,"./icons/notebook-text.js":false,"./icons/notebook.js":false,"./icons/notepad-text-dashed.js":false,"./icons/notepad-text.js":false,"./icons/nut-off.js":false,"./icons/octagon-minus.js":false,"./icons/nut.js":false,"./icons/octagon.js":false,"./icons/omega.js":false,"./icons/option.js":false,"./icons/orbit.js":"yZBqq","./icons/origami.js":false,"./icons/package-check.js":false,"./icons/package-2.js":false,"./icons/package-minus.js":false,"./icons/package-open.js":false,"./icons/package-plus.js":false,"./icons/package-search.js":false,"./icons/package-x.js":false,"./icons/package.js":false,"./icons/paint-roller.js":false,"./icons/paint-bucket.js":false,"./icons/paintbrush.js":false,"./icons/palette.js":false,"./icons/panda.js":false,"./icons/panel-bottom-close.js":false,"./icons/panel-bottom.js":false,"./icons/panel-bottom-open.js":false,"./icons/panel-left-right-dashed.js":false,"./icons/panel-right-close.js":false,"./icons/panel-right-open.js":false,"./icons/panel-right.js":false,"./icons/panel-top-bottom-dashed.js":false,"./icons/panel-top-close.js":false,"./icons/panel-top-open.js":false,"./icons/panel-top.js":false,"./icons/panels-left-bottom.js":false,"./icons/panels-right-bottom.js":false,"./icons/paperclip.js":false,"./icons/parentheses.js":false,"./icons/parking-meter.js":false,"./icons/party-popper.js":false,"./icons/pause.js":false,"./icons/paw-print.js":false,"./icons/pc-case.js":false,"./icons/pen-off.js":false,"./icons/pen-tool.js":false,"./icons/pencil-line.js":false,"./icons/pencil-off.js":false,"./icons/pencil-ruler.js":false,"./icons/pencil.js":false,"./icons/pentagon.js":false,"./icons/percent.js":false,"./icons/person-standing.js":false,"./icons/philippine-peso.js":false,"./icons/phone-call.js":false,"./icons/phone-incoming.js":false,"./icons/phone-forwarded.js":false,"./icons/phone-missed.js":false,"./icons/phone-off.js":false,"./icons/phone-outgoing.js":false,"./icons/phone.js":false,"./icons/pi.js":false,"./icons/piano.js":false,"./icons/pickaxe.js":false,"./icons/picture-in-picture.js":false,"./icons/picture-in-picture-2.js":false,"./icons/piggy-bank.js":false,"./icons/pilcrow-left.js":false,"./icons/pilcrow-right.js":false,"./icons/pilcrow.js":false,"./icons/pill-bottle.js":false,"./icons/pill.js":false,"./icons/pin-off.js":false,"./icons/pin.js":false,"./icons/pipette.js":false,"./icons/plane-landing.js":false,"./icons/plane-takeoff.js":false,"./icons/pizza.js":false,"./icons/plane.js":false,"./icons/plug-2.js":false,"./icons/play.js":false,"./icons/plug.js":false,"./icons/plus.js":false,"./icons/pocket-knife.js":false,"./icons/pocket.js":false,"./icons/podcast.js":false,"./icons/pointer.js":false,"./icons/pointer-off.js":false,"./icons/popcorn.js":false,"./icons/popsicle.js":false,"./icons/pound-sterling.js":false,"./icons/power-off.js":false,"./icons/power.js":false,"./icons/presentation.js":false,"./icons/printer.js":false,"./icons/projector.js":false,"./icons/printer-check.js":false,"./icons/proportions.js":false,"./icons/puzzle.js":false,"./icons/pyramid.js":false,"./icons/qr-code.js":false,"./icons/quote.js":false,"./icons/rabbit.js":false,"./icons/radar.js":false,"./icons/radiation.js":false,"./icons/radical.js":false,"./icons/radio-receiver.js":false,"./icons/radio.js":"8cgug","./icons/radio-tower.js":false,"./icons/radius.js":false,"./icons/rail-symbol.js":false,"./icons/rainbow.js":false,"./icons/rat.js":false,"./icons/ratio.js":false,"./icons/receipt-euro.js":false,"./icons/receipt-cent.js":false,"./icons/receipt-indian-rupee.js":false,"./icons/receipt-japanese-yen.js":false,"./icons/receipt-pound-sterling.js":false,"./icons/receipt-russian-ruble.js":false,"./icons/receipt-swiss-franc.js":false,"./icons/receipt-turkish-lira.js":false,"./icons/receipt.js":false,"./icons/receipt-text.js":false,"./icons/rectangle-circle.js":false,"./icons/rectangle-goggles.js":false,"./icons/rectangle-horizontal.js":false,"./icons/rectangle-vertical.js":false,"./icons/recycle.js":false,"./icons/redo-2.js":false,"./icons/redo-dot.js":false,"./icons/redo.js":false,"./icons/refresh-ccw-dot.js":false,"./icons/refresh-ccw.js":false,"./icons/refresh-cw-off.js":false,"./icons/refresh-cw.js":false,"./icons/refrigerator.js":false,"./icons/regex.js":false,"./icons/remove-formatting.js":false,"./icons/repeat-1.js":false,"./icons/repeat-2.js":false,"./icons/repeat.js":false,"./icons/replace.js":false,"./icons/replace-all.js":false,"./icons/reply-all.js":false,"./icons/rewind.js":false,"./icons/reply.js":false,"./icons/ribbon.js":false,"./icons/rocket.js":false,"./icons/rocking-chair.js":false,"./icons/roller-coaster.js":false,"./icons/rose.js":false,"./icons/rotate-ccw-key.js":false,"./icons/rotate-ccw-square.js":false,"./icons/rotate-ccw.js":false,"./icons/rotate-cw-square.js":false,"./icons/rotate-cw.js":false,"./icons/route-off.js":false,"./icons/route.js":false,"./icons/router.js":false,"./icons/rows-4.js":false,"./icons/ruler-dimension-line.js":false,"./icons/ruler.js":false,"./icons/rss.js":false,"./icons/sailboat.js":false,"./icons/russian-ruble.js":false,"./icons/salad.js":false,"./icons/sandwich.js":false,"./icons/satellite-dish.js":false,"./icons/satellite.js":false,"./icons/saudi-riyal.js":false,"./icons/save-all.js":false,"./icons/save-off.js":false,"./icons/save.js":false,"./icons/scale.js":false,"./icons/scaling.js":false,"./icons/scan-barcode.js":false,"./icons/scan-eye.js":false,"./icons/scan-face.js":false,"./icons/scan-heart.js":false,"./icons/scan-line.js":false,"./icons/scan-qr-code.js":false,"./icons/scan-search.js":false,"./icons/scan-text.js":false,"./icons/scan.js":false,"./icons/school.js":false,"./icons/scissors-line-dashed.js":false,"./icons/scissors.js":false,"./icons/screen-share-off.js":false,"./icons/screen-share.js":false,"./icons/scroll-text.js":false,"./icons/scroll.js":false,"./icons/search-check.js":false,"./icons/search-code.js":false,"./icons/search-slash.js":false,"./icons/search-x.js":false,"./icons/search.js":false,"./icons/section.js":false,"./icons/send.js":"fQUXo","./icons/send-to-back.js":false,"./icons/separator-horizontal.js":false,"./icons/separator-vertical.js":false,"./icons/server-cog.js":false,"./icons/server-crash.js":false,"./icons/server-off.js":false,"./icons/server.js":false,"./icons/settings-2.js":false,"./icons/settings.js":"icIUb","./icons/shapes.js":false,"./icons/share-2.js":false,"./icons/share.js":false,"./icons/sheet.js":false,"./icons/shell.js":false,"./icons/shield-alert.js":false,"./icons/shield-ban.js":false,"./icons/shield-check.js":false,"./icons/shield-ellipsis.js":false,"./icons/shield-half.js":false,"./icons/shield-minus.js":false,"./icons/shield-off.js":false,"./icons/shield-plus.js":false,"./icons/shield-user.js":false,"./icons/shield.js":false,"./icons/ship-wheel.js":false,"./icons/ship.js":false,"./icons/shirt.js":false,"./icons/shopping-bag.js":false,"./icons/shopping-basket.js":false,"./icons/shopping-cart.js":false,"./icons/shovel.js":false,"./icons/shower-head.js":false,"./icons/shredder.js":false,"./icons/shrimp.js":false,"./icons/shrink.js":false,"./icons/shuffle.js":false,"./icons/shrub.js":false,"./icons/signal-high.js":false,"./icons/sigma.js":false,"./icons/signal-low.js":false,"./icons/signal-medium.js":false,"./icons/signal-zero.js":false,"./icons/signal.js":false,"./icons/signature.js":false,"./icons/signpost.js":false,"./icons/signpost-big.js":false,"./icons/siren.js":false,"./icons/skip-back.js":false,"./icons/skip-forward.js":false,"./icons/skull.js":false,"./icons/slash.js":false,"./icons/slack.js":false,"./icons/slice.js":false,"./icons/smartphone-charging.js":false,"./icons/sliders-horizontal.js":false,"./icons/smartphone-nfc.js":false,"./icons/smartphone.js":false,"./icons/smile-plus.js":false,"./icons/smile.js":false,"./icons/snowflake.js":false,"./icons/snail.js":false,"./icons/soap-dispenser-droplet.js":false,"./icons/sofa.js":false,"./icons/soup.js":false,"./icons/spade.js":false,"./icons/space.js":false,"./icons/sparkle.js":false,"./icons/speaker.js":false,"./icons/spell-check-2.js":false,"./icons/speech.js":false,"./icons/spell-check.js":false,"./icons/spline-pointer.js":false,"./icons/spline.js":false,"./icons/split.js":false,"./icons/spool.js":false,"./icons/spotlight.js":false,"./icons/spray-can.js":false,"./icons/sprout.js":false,"./icons/square-dashed-bottom-code.js":false,"./icons/square-dashed-bottom.js":false,"./icons/square-dashed-top-solid.js":false,"./icons/square-pause.js":false,"./icons/square-radical.js":false,"./icons/square-round-corner.js":false,"./icons/square-square.js":false,"./icons/square-stack.js":false,"./icons/square-star.js":false,"./icons/square-stop.js":false,"./icons/square.js":false,"./icons/squares-exclude.js":false,"./icons/squares-intersect.js":false,"./icons/squares-subtract.js":false,"./icons/squircle-dashed.js":false,"./icons/squares-unite.js":false,"./icons/squircle.js":false,"./icons/squirrel.js":false,"./icons/stamp.js":false,"./icons/star-half.js":false,"./icons/star-off.js":false,"./icons/star.js":false,"./icons/step-back.js":false,"./icons/step-forward.js":false,"./icons/stethoscope.js":false,"./icons/sticker.js":false,"./icons/sticky-note.js":false,"./icons/store.js":false,"./icons/stretch-horizontal.js":false,"./icons/stretch-vertical.js":false,"./icons/strikethrough.js":false,"./icons/subscript.js":false,"./icons/sun-dim.js":false,"./icons/sun-medium.js":false,"./icons/sun-snow.js":false,"./icons/sun-moon.js":false,"./icons/sun.js":false,"./icons/sunrise.js":false,"./icons/superscript.js":false,"./icons/sunset.js":false,"./icons/swiss-franc.js":false,"./icons/switch-camera.js":false,"./icons/swatch-book.js":false,"./icons/swords.js":false,"./icons/sword.js":false,"./icons/syringe.js":false,"./icons/table-2.js":false,"./icons/table-cells-merge.js":false,"./icons/table-cells-split.js":false,"./icons/table-columns-split.js":false,"./icons/table-of-contents.js":false,"./icons/table-properties.js":false,"./icons/table.js":false,"./icons/table-rows-split.js":false,"./icons/tablet-smartphone.js":false,"./icons/tablet.js":false,"./icons/tablets.js":false,"./icons/tag.js":false,"./icons/tags.js":false,"./icons/tally-1.js":false,"./icons/tally-2.js":false,"./icons/tally-3.js":false,"./icons/tally-4.js":false,"./icons/tally-5.js":false,"./icons/tangent.js":false,"./icons/target.js":false,"./icons/telescope.js":false,"./icons/tent-tree.js":false,"./icons/tent.js":false,"./icons/terminal.js":false,"./icons/test-tube.js":false,"./icons/test-tubes.js":false,"./icons/text-cursor-input.js":false,"./icons/text-cursor.js":false,"./icons/text-quote.js":false,"./icons/text-search.js":false,"./icons/theater.js":false,"./icons/thermometer-snowflake.js":false,"./icons/thermometer.js":false,"./icons/thumbs-down.js":false,"./icons/thermometer-sun.js":false,"./icons/thumbs-up.js":false,"./icons/ticket-check.js":false,"./icons/ticket-minus.js":false,"./icons/ticket-percent.js":false,"./icons/ticket-plus.js":false,"./icons/ticket-slash.js":false,"./icons/ticket.js":false,"./icons/ticket-x.js":false,"./icons/tickets-plane.js":false,"./icons/tickets.js":false,"./icons/timer-off.js":false,"./icons/timer-reset.js":false,"./icons/timer.js":false,"./icons/toggle-left.js":false,"./icons/toggle-right.js":false,"./icons/tool-case.js":false,"./icons/toilet.js":false,"./icons/tornado.js":false,"./icons/torus.js":false,"./icons/touchpad-off.js":false,"./icons/touchpad.js":false,"./icons/tower-control.js":false,"./icons/toy-brick.js":false,"./icons/tractor.js":false,"./icons/traffic-cone.js":false,"./icons/train-front-tunnel.js":false,"./icons/train-front.js":false,"./icons/train-track.js":false,"./icons/transgender.js":false,"./icons/trash-2.js":false,"./icons/trash.js":false,"./icons/tree-deciduous.js":false,"./icons/tree-pine.js":false,"./icons/trees.js":false,"./icons/trello.js":false,"./icons/trending-down.js":false,"./icons/trending-up-down.js":false,"./icons/trending-up.js":false,"./icons/triangle-dashed.js":false,"./icons/triangle-right.js":false,"./icons/triangle.js":false,"./icons/trophy.js":false,"./icons/truck-electric.js":false,"./icons/truck.js":false,"./icons/turkish-lira.js":false,"./icons/turntable.js":false,"./icons/turtle.js":false,"./icons/tv.js":false,"./icons/tv-minimal-play.js":false,"./icons/twitch.js":false,"./icons/twitter.js":false,"./icons/type-outline.js":false,"./icons/type.js":false,"./icons/umbrella.js":false,"./icons/umbrella-off.js":false,"./icons/underline.js":false,"./icons/undo-2.js":false,"./icons/undo-dot.js":false,"./icons/undo.js":false,"./icons/unfold-horizontal.js":false,"./icons/unfold-vertical.js":false,"./icons/ungroup.js":false,"./icons/unlink-2.js":false,"./icons/unlink.js":false,"./icons/unplug.js":false,"./icons/upload.js":false,"./icons/usb.js":false,"./icons/user-check.js":false,"./icons/user-cog.js":false,"./icons/user-lock.js":false,"./icons/user-minus.js":false,"./icons/user-pen.js":false,"./icons/user-plus.js":false,"./icons/user-round-pen.js":false,"./icons/user-round-search.js":false,"./icons/user-search.js":false,"./icons/user-star.js":false,"./icons/user-x.js":false,"./icons/user.js":false,"./icons/users.js":false,"./icons/utility-pole.js":false,"./icons/variable.js":false,"./icons/vault.js":false,"./icons/vector-square.js":false,"./icons/vegan.js":false,"./icons/venetian-mask.js":false,"./icons/venus-and-mars.js":false,"./icons/venus.js":false,"./icons/vibrate-off.js":false,"./icons/vibrate.js":false,"./icons/video-off.js":false,"./icons/video.js":false,"./icons/videotape.js":false,"./icons/voicemail.js":false,"./icons/view.js":false,"./icons/volleyball.js":false,"./icons/volume-2.js":false,"./icons/volume-1.js":false,"./icons/volume-off.js":false,"./icons/volume-x.js":false,"./icons/volume.js":false,"./icons/vote.js":false,"./icons/wallet-cards.js":false,"./icons/wallet.js":false,"./icons/wallpaper.js":false,"./icons/wand.js":false,"./icons/warehouse.js":false,"./icons/washing-machine.js":false,"./icons/watch.js":false,"./icons/waves-ladder.js":false,"./icons/waves.js":false,"./icons/waypoints.js":false,"./icons/webcam.js":false,"./icons/webhook-off.js":false,"./icons/webhook.js":false,"./icons/weight.js":false,"./icons/wheat-off.js":false,"./icons/wheat.js":false,"./icons/whole-word.js":false,"./icons/wifi-high.js":false,"./icons/wifi-cog.js":false,"./icons/wifi-low.js":false,"./icons/wifi-off.js":"9p2jF","./icons/wifi-pen.js":false,"./icons/wifi-sync.js":false,"./icons/wifi-zero.js":false,"./icons/wifi.js":"fbysy","./icons/wind-arrow-down.js":false,"./icons/wind.js":false,"./icons/wine-off.js":false,"./icons/wine.js":false,"./icons/workflow.js":false,"./icons/worm.js":false,"./icons/wrench.js":false,"./icons/x.js":"aJBqa","./icons/youtube.js":false,"./icons/zap-off.js":false,"./icons/zoom-in.js":false,"./icons/zap.js":"iMEtN","./icons/zoom-out.js":false,"./icons/arrow-down-0-1.js":false,"./icons/arrow-down-1-0.js":false,"./icons/arrow-up-0-1.js":false,"./icons/arrow-up-1-0.js":false,"./createLucideIcon.js":false,"./Icon.js":false,"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"7TcMZ":[function(require,module,exports,__globalThis) {
 /**
  * @license lucide-react v0.545.0 - ISC
  *
@@ -30800,6 +30923,36 @@ const __iconNode = [
     ]
 ];
 const Radio = (0, _createLucideIconJsDefault.default)("radio", __iconNode);
+
+},{"../createLucideIcon.js":"c2nE9","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"fQUXo":[function(require,module,exports,__globalThis) {
+/**
+ * @license lucide-react v0.545.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */ var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "__iconNode", ()=>__iconNode);
+parcelHelpers.export(exports, "default", ()=>Send);
+var _createLucideIconJs = require("../createLucideIcon.js");
+var _createLucideIconJsDefault = parcelHelpers.interopDefault(_createLucideIconJs);
+const __iconNode = [
+    [
+        "path",
+        {
+            d: "M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z",
+            key: "1ffxy3"
+        }
+    ],
+    [
+        "path",
+        {
+            d: "m21.854 2.147-10.94 10.939",
+            key: "12cjpa"
+        }
+    ]
+];
+const Send = (0, _createLucideIconJsDefault.default)("send", __iconNode);
 
 },{"../createLucideIcon.js":"c2nE9","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"icIUb":[function(require,module,exports,__globalThis) {
 /**
@@ -111934,6 +112087,7 @@ parcelHelpers.export(exports, "ControlPanel", ()=>(0, _controlPanel.ControlPanel
 parcelHelpers.export(exports, "PlanarControl", ()=>(0, _planar.PlanarControl));
 parcelHelpers.export(exports, "RemoteControl", ()=>(0, _remoteControl.RemoteControl));
 parcelHelpers.export(exports, "RobotConnection", ()=>(0, _robotConnection.RobotConnection));
+parcelHelpers.export(exports, "Chat", ()=>(0, _chat.Chat));
 var _jointSliders = require("./JointSliders");
 var _movementControl = require("./MovementControl");
 var _rotationControl = require("./RotationControl");
@@ -111941,8 +112095,9 @@ var _controlPanel = require("./ControlPanel");
 var _planar = require("../planar");
 var _remoteControl = require("./RemoteControl");
 var _robotConnection = require("./RobotConnection");
+var _chat = require("./Chat");
 
-},{"./JointSliders":"7zMbo","./MovementControl":"g6BtD","./RotationControl":"7gKgD","./ControlPanel":"4AMPX","../planar":"8gG77","./RemoteControl":"6KuOD","./RobotConnection":"dqsdH","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"7zMbo":[function(require,module,exports,__globalThis) {
+},{"./JointSliders":"7zMbo","./MovementControl":"g6BtD","./RotationControl":"7gKgD","./ControlPanel":"4AMPX","../planar":"8gG77","./RemoteControl":"6KuOD","./RobotConnection":"dqsdH","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","./Chat":"4gDHY"}],"7zMbo":[function(require,module,exports,__globalThis) {
 var $parcel$ReactRefreshHelpers$af61 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
 $parcel$ReactRefreshHelpers$af61.init();
 var prevRefreshReg = globalThis.$RefreshReg$;
@@ -207221,7 +207376,259 @@ parcelHelpers.defineInteropFlag(exports);
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"5fK13":[function(require,module,exports,__globalThis) {
 module.exports = Promise.resolve(module.bundle.root("9MEM4"));
 
-},{"9MEM4":"9MEM4"}],"2jjvR":[function(require,module,exports,__globalThis) {
+},{"9MEM4":"9MEM4"}],"4gDHY":[function(require,module,exports,__globalThis) {
+var $parcel$ReactRefreshHelpers$f008 = require("@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js");
+$parcel$ReactRefreshHelpers$f008.init();
+var prevRefreshReg = globalThis.$RefreshReg$;
+var prevRefreshSig = globalThis.$RefreshSig$;
+$parcel$ReactRefreshHelpers$f008.prelude(module);
+
+try {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "Chat", ()=>Chat);
+var _jsxDevRuntime = require("react/jsx-dev-runtime");
+var _react = require("react");
+var _reactDefault = parcelHelpers.interopDefault(_react);
+var _lucideReact = require("lucide-react");
+var _s = $RefreshSig$();
+const Chat = ({ className = '' })=>{
+    _s();
+    const [messages, setMessages] = (0, _react.useState)([
+        {
+            id: '1',
+            text: 'Hello! Chat-based robot control is coming soon. For now, please use the Manual controls tab.',
+            sender: 'bot',
+            timestamp: new Date()
+        }
+    ]);
+    const [inputValue, setInputValue] = (0, _react.useState)('');
+    const messagesEndRef = (0, _react.useRef)(null);
+    const scrollToBottom = ()=>{
+        messagesEndRef.current?.scrollIntoView({
+            behavior: 'smooth'
+        });
+    };
+    (0, _react.useEffect)(()=>{
+        scrollToBottom();
+    }, [
+        messages
+    ]);
+    const handleSend = ()=>{
+        if (!inputValue.trim()) return;
+        const userMessage = {
+            id: Date.now().toString(),
+            text: inputValue,
+            sender: 'user',
+            timestamp: new Date()
+        };
+        setMessages((prev)=>[
+                ...prev,
+                userMessage
+            ]);
+        setInputValue('');
+        // Simulate bot response
+        setTimeout(()=>{
+            const botMessage = {
+                id: (Date.now() + 1).toString(),
+                text: 'Chat functionality is coming soon! For now, please use the Manual controls.',
+                sender: 'bot',
+                timestamp: new Date()
+            };
+            setMessages((prev)=>[
+                    ...prev,
+                    botMessage
+                ]);
+        }, 500);
+    };
+    const handleKeyPress = (e)=>{
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+    return /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+        className: `flex flex-col h-full ${className}`,
+        children: [
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                className: "bg-blue-50 border-l-4 border-blue-400 p-3 mb-2",
+                children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                    className: "flex items-start",
+                    children: [
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                            className: "flex-shrink-0",
+                            children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("svg", {
+                                className: "h-5 w-5 text-blue-400",
+                                viewBox: "0 0 20 20",
+                                fill: "currentColor",
+                                children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("path", {
+                                    fillRule: "evenodd",
+                                    d: "M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z",
+                                    clipRule: "evenodd"
+                                }, void 0, false, {
+                                    fileName: "src/components/Chat.tsx",
+                                    lineNumber: 74,
+                                    columnNumber: 15
+                                }, undefined)
+                            }, void 0, false, {
+                                fileName: "src/components/Chat.tsx",
+                                lineNumber: 73,
+                                columnNumber: 13
+                            }, undefined)
+                        }, void 0, false, {
+                            fileName: "src/components/Chat.tsx",
+                            lineNumber: 72,
+                            columnNumber: 11
+                        }, undefined),
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                            className: "ml-3",
+                            children: [
+                                /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("p", {
+                                    className: "text-sm text-blue-700 font-medium",
+                                    children: "Planned Feature - Coming Soon"
+                                }, void 0, false, {
+                                    fileName: "src/components/Chat.tsx",
+                                    lineNumber: 78,
+                                    columnNumber: 13
+                                }, undefined),
+                                /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("p", {
+                                    className: "text-xs text-blue-600 mt-1",
+                                    children: "This chat interface is currently under development and does not work yet. Stay tuned!"
+                                }, void 0, false, {
+                                    fileName: "src/components/Chat.tsx",
+                                    lineNumber: 81,
+                                    columnNumber: 13
+                                }, undefined)
+                            ]
+                        }, void 0, true, {
+                            fileName: "src/components/Chat.tsx",
+                            lineNumber: 77,
+                            columnNumber: 11
+                        }, undefined)
+                    ]
+                }, void 0, true, {
+                    fileName: "src/components/Chat.tsx",
+                    lineNumber: 71,
+                    columnNumber: 9
+                }, undefined)
+            }, void 0, false, {
+                fileName: "src/components/Chat.tsx",
+                lineNumber: 70,
+                columnNumber: 7
+            }, undefined),
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                className: "flex-1 overflow-y-auto p-4 space-y-3",
+                children: [
+                    messages.map((message)=>/*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                            className: `flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`,
+                            children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                                className: `max-w-[80%] rounded-lg px-4 py-2 ${message.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'}`,
+                                children: [
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("p", {
+                                        className: "text-sm whitespace-pre-wrap",
+                                        children: message.text
+                                    }, void 0, false, {
+                                        fileName: "src/components/Chat.tsx",
+                                        lineNumber: 102,
+                                        columnNumber: 15
+                                    }, undefined),
+                                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("p", {
+                                        className: "text-xs opacity-70 mt-1",
+                                        children: message.timestamp.toLocaleTimeString([], {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })
+                                    }, void 0, false, {
+                                        fileName: "src/components/Chat.tsx",
+                                        lineNumber: 103,
+                                        columnNumber: 15
+                                    }, undefined)
+                                ]
+                            }, void 0, true, {
+                                fileName: "src/components/Chat.tsx",
+                                lineNumber: 95,
+                                columnNumber: 13
+                            }, undefined)
+                        }, message.id, false, {
+                            fileName: "src/components/Chat.tsx",
+                            lineNumber: 91,
+                            columnNumber: 11
+                        }, undefined)),
+                    /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                        ref: messagesEndRef
+                    }, void 0, false, {
+                        fileName: "src/components/Chat.tsx",
+                        lineNumber: 109,
+                        columnNumber: 9
+                    }, undefined)
+                ]
+            }, void 0, true, {
+                fileName: "src/components/Chat.tsx",
+                lineNumber: 89,
+                columnNumber: 7
+            }, undefined),
+            /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                className: "border-t border-gray-300 p-4 bg-white",
+                children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("div", {
+                    className: "flex gap-2",
+                    children: [
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("input", {
+                            type: "text",
+                            value: inputValue,
+                            onChange: (e)=>setInputValue(e.target.value),
+                            onKeyPress: handleKeyPress,
+                            placeholder: "Type a message...",
+                            className: "flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        }, void 0, false, {
+                            fileName: "src/components/Chat.tsx",
+                            lineNumber: 115,
+                            columnNumber: 11
+                        }, undefined),
+                        /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)("button", {
+                            onClick: handleSend,
+                            className: "px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center justify-center",
+                            type: "button",
+                            children: /*#__PURE__*/ (0, _jsxDevRuntime.jsxDEV)((0, _lucideReact.Send), {
+                                size: 16
+                            }, void 0, false, {
+                                fileName: "src/components/Chat.tsx",
+                                lineNumber: 128,
+                                columnNumber: 13
+                            }, undefined)
+                        }, void 0, false, {
+                            fileName: "src/components/Chat.tsx",
+                            lineNumber: 123,
+                            columnNumber: 11
+                        }, undefined)
+                    ]
+                }, void 0, true, {
+                    fileName: "src/components/Chat.tsx",
+                    lineNumber: 114,
+                    columnNumber: 9
+                }, undefined)
+            }, void 0, false, {
+                fileName: "src/components/Chat.tsx",
+                lineNumber: 113,
+                columnNumber: 7
+            }, undefined)
+        ]
+    }, void 0, true, {
+        fileName: "src/components/Chat.tsx",
+        lineNumber: 68,
+        columnNumber: 5
+    }, undefined);
+};
+_s(Chat, "Gp8w69iRFQ47roXGUbPHLlaM1Po=");
+_c = Chat;
+var _c;
+$RefreshReg$(_c, "Chat");
+
+  $parcel$ReactRefreshHelpers$f008.postlude(module);
+} finally {
+  globalThis.$RefreshReg$ = prevRefreshReg;
+  globalThis.$RefreshSig$ = prevRefreshSig;
+}
+},{"react/jsx-dev-runtime":"dVPUn","react":"jMk1U","lucide-react":"2I7qR","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","@parcel/transformer-react-refresh-wrap/lib/helpers/helpers.js":"7h6Pi"}],"2jjvR":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 /**
@@ -207271,6 +207678,7 @@ class Robot extends (0, _enable3D.THREE).Object3D {
         this.robot = null;
         this.loader = null;
         this.linkPhysicsMap = options.linkPhysicsMap;
+        this.visualPhysicsMap = options.visualPhysicsMap || {};
         this.gripper_a_touched_objects = new Set();
         this.gripper_b_touched_objects = new Set();
         this.gripper_a = null;
@@ -207307,6 +207715,10 @@ class Robot extends (0, _enable3D.THREE).Object3D {
     async load(options) {
         const model = this.loadModel(options);
         await Robot.waitTillAllMeshesLoaded(this.robot, this.modelPath);
+        if (this.robot) {
+            this.addPhysicsAndColorDefinitionsForObject(this.robot, options.enable3dPhysicsObject, this.linkPhysicsMap);
+            this.addPhysicsAndColorDefinitionsForVisuals(this.robot, options.enable3dPhysicsObject, this.visualPhysicsMap);
+        }
         return model;
     }
     async loadModel(options) {
@@ -207331,6 +207743,8 @@ class Robot extends (0, _enable3D.THREE).Object3D {
         // Update the mapped joint limits in the pivots based on the loaded robot model
         if (robot.joints) {
             console.log("robot.joints", robot.joints);
+            console.log("robot.links", robot.links);
+            console.log("robot", robot);
             Object.values(this.pivotMap).forEach((pivot)=>{
                 const joint = robot.joints?.[pivot.jointName];
                 if (joint) {
@@ -207354,7 +207768,6 @@ class Robot extends (0, _enable3D.THREE).Object3D {
         Object.keys(this.pivotMap).forEach((name)=>this.setPivotValue(name, this.pivotMap[name].value));
         this._initializationStatus = "initialized";
         options.scene.add(robot);
-        this.addPhysicsAndColorDefinitionsForObject(robot, options.enable3dPhysicsObject, this.linkPhysicsMap);
         return robot;
     }
     // recursively set the color of all meshes in the object
@@ -207379,11 +207792,6 @@ class Robot extends (0, _enable3D.THREE).Object3D {
             await new Promise((resolve)=>setTimeout(resolve, interval));
         }
         return false;
-    }
-    static async checkAndSetMeshColorWithBackoff(object, color, robot, urdfPath, maxWait = 3000, interval = 100) {
-        const loaded = await Robot.waitTillAllMeshesLoaded(robot, urdfPath, maxWait, interval);
-        if (loaded) Robot.setMeshColor(object, color);
-        else console.warn("Meshes not fully loaded within timeout, color not set.");
     }
     /**
    * Parses URDF XML to find all mesh filenames referenced in the file
@@ -207420,6 +207828,62 @@ class Robot extends (0, _enable3D.THREE).Object3D {
         if (object.isMesh) count++;
         for (const child of object.children ?? [])count += Robot.collectTotalMeshes(child);
         return count;
+    }
+    static computeObjectAxisLength(object, axis) {
+        if (!object) return 0;
+        const bbox = new (0, _enable3D.THREE).Box3().setFromObject(object);
+        const size = new (0, _enable3D.THREE).Vector3();
+        bbox.getSize(size);
+        if (axis === 'x') return size.x;
+        if (axis === 'y') return size.y;
+        return size.z;
+    }
+    static buildIKSegmentInfo(mesh, configs) {
+        const segments = [];
+        for (const config of configs){
+            const length = Robot.computeObjectAxisLength(mesh, config.axis);
+            console.log(`Visual IK axis length`, {
+                visual: mesh?.name,
+                jointName: config.jointName,
+                segment: config.segment,
+                axis: config.axis,
+                length
+            });
+            if (length > 0) segments.push({
+                ...config,
+                length: length * (config.direction ?? 1)
+            });
+        }
+        return segments;
+    }
+    static calculatePlanarIKEndPosition(basePosition, segments) {
+        let accumulatedAngle = 0;
+        const endPosition = basePosition.clone();
+        for (const segment of segments){
+            accumulatedAngle += segment.angleRadians;
+            endPosition.x += segment.length * Math.cos(accumulatedAngle);
+            endPosition.y += segment.length * Math.sin(accumulatedAngle);
+        }
+        return endPosition;
+    }
+    static calculateIKEndEffectorPositionFromSegments(basePosition, segmentInfos, jointAngles) {
+        const orderedSegments = [
+            ...segmentInfos
+        ].sort((a, b)=>a.segment.localeCompare(b.segment));
+        const planarSegments = orderedSegments.map((info)=>({
+                length: info.length,
+                angleRadians: jointAngles[info.jointName] ?? 0
+            }));
+        return Robot.calculatePlanarIKEndPosition(basePosition, planarSegments);
+    }
+    calculateVisualIKEndEffectorPosition(visualName, jointAngles, basePosition = new (0, _enable3D.THREE).Vector3()) {
+        if (!this.robot || !this.robot.visual) return null;
+        const visual = this.robot.visual[visualName];
+        if (!visual) return null;
+        const mesh = Robot.findFirstMesh(visual);
+        const segmentInfos = mesh?.userData?.ikSegmentsInfo;
+        if (!mesh || !segmentInfos || segmentInfos.length === 0) return null;
+        return Robot.calculateIKEndEffectorPositionFromSegments(basePosition, segmentInfos, jointAngles);
     }
     /**
    * Checks if all meshes defined in the URDF have been loaded into the robot
@@ -207473,15 +207937,16 @@ class Robot extends (0, _enable3D.THREE).Object3D {
                 compoundBox.height = physicsAndColor.physicsMesh.geometry.parameters.height;
                 // @ts-expect-error because parameters does exist for...cubes, not sure why it isn't properly typed
                 compoundBox.depth = physicsAndColor.physicsMesh.geometry.parameters.depth;
-                compoundBox.x = physicsAndColor.physicsMesh.position.x;
-                compoundBox.y = physicsAndColor.physicsMesh.position.y;
-                compoundBox.z = physicsAndColor.physicsMesh.position.z;
+                const offset = physicsAndColor.physicsOffset || {};
+                compoundBox.x = physicsAndColor.physicsMesh.position.x + (offset.x ?? 0);
+                compoundBox.y = physicsAndColor.physicsMesh.position.y + (offset.y ?? 0);
+                compoundBox.z = physicsAndColor.physicsMesh.position.z + (offset.z ?? 0);
             }
             if (physicsAndColor.color) // Attempts to set mesh colors with retry + timeout logic.
             // Checks if all meshes from URDF are loaded before applying the color.
             // Retries every 100ms (up to 3s by default) to handle async loading of meshes.
             // Falls back gracefully with a warning if meshes never appear.
-            Robot.checkAndSetMeshColorWithBackoff(link, physicsAndColor.color, this.robot, this.modelPath);
+            Robot.setMeshColor(link, physicsAndColor.color);
             enable3dObj.add.existing(link, {
                 compound: [
                     compoundBox
@@ -207529,6 +207994,99 @@ class Robot extends (0, _enable3D.THREE).Object3D {
                     }
                 }
             });
+        }
+    }
+    /**
+   * Gets the first child mesh of an object
+   * @param object - The object to check
+   * @returns The first child mesh, or null
+   */ static findFirstMesh(object) {
+        if (!object || !object.children || object.children.length === 0) return null;
+        const firstChild = object.children[0];
+        return firstChild?.isMesh ? firstChild : null;
+    }
+    /**
+   * Traverses visuals and adds physics and color definitions
+   * Works with URDFVisual elements instead of URDFLink elements
+   */ addPhysicsAndColorDefinitionsForVisuals(robot, enable3dObj, visualPhysicsMap) {
+        if (!robot.visual) return;
+        for (const [visualName, visual] of Object.entries(robot.visual))if (visualPhysicsMap[visualName]) {
+            const physicsAndColor = visualPhysicsMap[visualName];
+            console.log("visual found", visual);
+            // Find the first mesh in the visual's children
+            const mesh = Robot.findFirstMesh(visual);
+            if (!mesh) {
+                console.warn(`No mesh found for visual: ${visualName}`);
+                continue;
+            }
+            // Set color if specified
+            if (physicsAndColor.color) Robot.setMeshColor(mesh, physicsAndColor.color, this.robot, this.modelPath);
+            if (physicsAndColor.ikSegment) {
+                const ikSegmentInfos = Robot.buildIKSegmentInfo(mesh, [
+                    physicsAndColor.ikSegment
+                ]);
+                mesh.userData = mesh.userData || {};
+                mesh.userData.ikSegmentsInfo = ikSegmentInfos;
+            }
+            // Add physics
+            // Clone the mesh, translate it, and apply physics to the clone
+            const meshClone = mesh.clone();
+            const offset = physicsAndColor.physicsOffset || {};
+            if (physicsAndColor.physicsMesh) {
+                // Use compound box with specified physics mesh
+                const physicsMesh = physicsAndColor.physicsMesh;
+                // @ts-expect-error because parameters does exist for cubes, not sure why it isn't properly typed
+                const width = physicsMesh.geometry.parameters.width;
+                // @ts-expect-error because parameters does exist for cubes, not sure why it isn't properly typed
+                const height = physicsMesh.geometry.parameters.height;
+                // @ts-expect-error because parameters does exist for cubes, not sure why it isn't properly typed
+                const depth = physicsMesh.geometry.parameters.depth;
+                // Position clone with offset adjustments
+                meshClone.position.set((offset.x ?? 0) - width / 2, (offset.y ?? 0) - height / 2, (offset.z ?? 0) - depth / 2);
+                const compoundBox = {
+                    shape: 'box',
+                    width,
+                    height,
+                    depth,
+                    x: 0,
+                    y: 0,
+                    z: 0
+                };
+                meshClone.visible = false;
+                mesh.add(meshClone);
+                enable3dObj.add.existing(meshClone, {
+                    compound: [
+                        compoundBox
+                    ]
+                });
+                // Set collision flags
+                const body = meshClone.body;
+                if (body) body.setCollisionFlags(2);
+            } else {
+                const bbox = new (0, _enable3D.THREE).Box3().setFromObject(mesh);
+                const size = new (0, _enable3D.THREE).Vector3();
+                bbox.getSize(size);
+                // Position clone with offset adjustments
+                meshClone.position.set(offset.x ?? 0, offset.y ?? 0, offset.z ?? 0);
+                const boxShape = {
+                    width: size.x,
+                    height: size.y,
+                    depth: size.z,
+                    x: 0,
+                    y: 0,
+                    z: 0
+                };
+                meshClone.visible = false;
+                mesh.add(meshClone);
+                enable3dObj.add.existing(meshClone, {
+                    addChildren: false,
+                    shape: 'box',
+                    ...boxShape
+                });
+                // Set collision flags
+                const body = meshClone.body;
+                if (body) body.setCollisionFlags(2);
+            }
         }
     }
     markObjectAsGripped(object_name, object) {
@@ -207581,6 +208139,21 @@ class Robot extends (0, _enable3D.THREE).Object3D {
         if (link.body) // @ts-expect-error enable3dObj.add.existing adds the body property to the object
         link.body.needUpdate = true;
     }
+    static markVisualsAsNeedingPhysicsUpdate(obj) {
+        if (!obj.visual) return;
+        for (const [_, visual] of Object.entries(obj.visual)){
+            const mesh = Robot.findFirstMesh(visual);
+            // @ts-expect-error enable3dObj.add.existing adds the body property to the mesh
+            if (mesh?.body) // @ts-expect-error enable3dObj.add.existing adds the body property to the mesh
+            mesh.body.needUpdate = true;
+            // Check children for physics bodies (cloned meshes with physics)
+            if (mesh?.children) {
+                for (const child of mesh.children)// @ts-expect-error enable3dObj.add.existing adds the body property to the child
+                if (child.body) // @ts-expect-error enable3dObj.add.existing adds the body property to the child
+                child.body.needUpdate = true;
+            }
+        }
+    }
     /**
    * set the joint value for the urdf robot
    */ setJointValue(name, ...values) {
@@ -207594,6 +208167,7 @@ class Robot extends (0, _enable3D.THREE).Object3D {
         const pivot = this.pivotMap[pivotName];
         if (pivot && pivot.physicsRepresentation) pivot.physicsRepresentation.currentRotation = values[0];
         Robot.markLinksAsNeedingPhysicsUpdate(this.robot);
+        Robot.markVisualsAsNeedingPhysicsUpdate(this.robot);
         this.updateGrippedObjectPositions();
         return this.robot.setJointValue(name, ...values);
     }
@@ -273113,7 +273687,7 @@ const createMainScene = async ({ canvas, container, initialRobot = 'lekiwi', onA
     const DEFAULT_POSES = {
         lekiwi: {
             position: {
-                x: -1.23,
+                x: -5,
                 y: 1,
                 z: -2.23
             },
@@ -273134,6 +273708,7 @@ const createMainScene = async ({ canvas, container, initialRobot = 'lekiwi', onA
         robot.robot.position.set(pose.position.x, pose.position.y, pose.position.z);
         robot.robot.rotation.z = _three.MathUtils.degToRad(pose.rotationDegrees);
         (0, _robot.Robot).markLinksAsNeedingPhysicsUpdate(robot.robot);
+        (0, _robot.Robot).markVisualsAsNeedingPhysicsUpdate(robot.robot);
         robot.updateGrippedObjectPositions();
     };
     // Apply default joint values to robot
@@ -273721,6 +274296,61 @@ class LeKiwi extends (0, _robot.Robot) {
                 color: new _three.Color(0x00ee00)
             }
         };
+        // Example visualPhysicsMap - uses mesh itself for physics (no physicsMesh specified)
+        const visualPhysicsMap = {
+            'SO_ARM100_08k_116_Square-v1_visual': {
+                color: new _three.Color(0xff0000),
+                ikSegment: {
+                    jointName: 'STS3215_03a-v1-1_Revolute-49',
+                    segment: 'ik1',
+                    axis: 'y'
+                },
+                physicsOffset: {
+                    x: 0,
+                    y: 12,
+                    z: 0
+                }
+            },
+            'SO_ARM100_08k_Mirror-v1_visual': {
+                color: new _three.Color(0x00ffff),
+                ikSegment: {
+                    jointName: 'STS3215_03a-v1-2_Revolute-51',
+                    segment: 'ik2',
+                    axis: 'y'
+                },
+                physicsOffset: {
+                    x: 0,
+                    y: -35,
+                    z: 0
+                }
+            },
+            'Moving_Jaw_08d-v1_visual': {
+                color: new _three.Color(0x00ffff),
+                ikSegment: {
+                    jointName: 'STS3215_03a-v1-2_Revolute-51',
+                    segment: 'ik2',
+                    axis: 'y'
+                },
+                physicsOffset: {
+                    x: 0,
+                    y: -35,
+                    z: 0
+                }
+            },
+            'Wrist_Roll_08c-v1_visual': {
+                color: new _three.Color(0x00ffff),
+                ikSegment: {
+                    jointName: 'STS3215_03a-v1-2_Revolute-51',
+                    segment: 'ik2',
+                    axis: 'y'
+                },
+                physicsOffset: {
+                    x: 0,
+                    y: 0,
+                    z: 55
+                }
+            }
+        };
         // Call super with options object
         super({
             name: "LeKiwi",
@@ -273729,7 +274359,8 @@ class LeKiwi extends (0, _robot.Robot) {
             modelPath: window.location.origin + "/urdf/lekiwi/LeKiwi.urdf",
             unmappedPivotMap,
             basePhysicsRepresentation,
-            linkPhysicsMap
+            linkPhysicsMap: {},
+            visualPhysicsMap
         });
     }
 }

@@ -241,6 +241,69 @@ PhysicsLoader('/ammo/kripken', () => MainScene());
 
 Tip: If you use a bundler, make sure the Ammo assets are copied to your build output. For example, with Parcel you can copy static files from a `static/` folder to `dist/` using `parcel-reporter-static-files-copy`.
 
+## Helper Utilities
+
+### URDF Inspector
+
+A command-line utility to inspect URDF files and display their structure, including all links, visuals, joints, and materials.
+
+**Installation:**
+
+The utility requires the `xml2js` package, which is included in devDependencies:
+
+```bash
+npm install
+```
+
+**Usage:**
+
+```bash
+npm run inspect-urdf
+```
+
+This will recursively scan the `static/urdf/` directory for all `.urdf` files and display:
+
+- 🤖 **Robot Name**: The name defined in the URDF
+- 🔗 **Links**: All link elements with their nested visuals
+- 👁️ **Visuals**: Complete list of visual elements with their parent links
+- 🔧 **Joints**: All joints with their types (revolute, continuous, fixed, etc.)
+- 🎨 **Materials**: Material definitions
+
+**Example Output:**
+
+```
+🔍 Found 2 URDF file(s)
+
+================================================================================
+📄 File: lekiwi/LeKiwi.urdf
+================================================================================
+
+🤖 Robot Name: LeKiwi
+
+🔗 Links (45):
+  1. base_plate_layer1-v5
+     └─ Visual: base_plate_layer1-v5_visual
+  2. drive_motor_mount-v11-2
+     └─ Visual: drive_motor_mount-v11-2_visual
+  ...
+
+👁️  All Visuals (45):
+  1. base_plate_layer1-v5_visual (in link: base_plate_layer1-v5)
+  2. drive_motor_mount-v11-2_visual (in link: drive_motor_mount-v11-2)
+  ...
+
+🔧 Joints (44):
+  1. base_plate_layer1-v5_baseplate2bottom_mount (type: fixed)
+  2. STS3215_03a-v1_Revolute-45 (type: revolute)
+  ...
+```
+
+This utility is helpful for:
+- Understanding the structure of robot URDF files
+- Finding the correct names for visuals and links when setting up physics or colors
+- Debugging URDF loading issues
+- Documenting robot configurations
+
 ## Acknowledgement
 
 The /URDF part of the code is taken from https://github.com/julien-blanchon/RobotHub-Frontend/tree/main/src/lib/components/3d/elements/robot/URDF

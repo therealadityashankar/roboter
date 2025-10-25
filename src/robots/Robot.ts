@@ -49,10 +49,37 @@ export interface LinkPhysics{
   color?: THREE.Color
   gripper_part_a?: boolean
   gripper_part_b?: boolean
+  physicsOffset?: { x?: number; y?: number; z?: number }
 }
 
 export interface LinkPhysicsMap{
   [key: string]: LinkPhysics;
+}
+
+export type VisualIKAxis = 'x' | 'y' | 'z';
+
+export type VisualIKSegmentType = 'ik1' | 'ik2';
+
+export interface VisualPhysicsIKConfig {
+  jointName: string
+  segment: VisualIKSegmentType
+  axis: VisualIKAxis
+  direction?: 1 | -1
+}
+
+export interface VisualIKSegmentInfo extends VisualPhysicsIKConfig {
+  length: number
+}
+
+export interface VisualPhysics{
+  physicsMesh?: THREE.Mesh
+  color?: THREE.Color
+  ikSegment?: VisualPhysicsIKConfig
+  physicsOffset?: { x?: number; y?: number; z?: number }
+}
+
+export interface VisualPhysicsMap{
+  [key: string]: VisualPhysics;
 }
 
 /**
@@ -64,6 +91,7 @@ interface RobotOptions {
   unmappedPivotMap?: UnmappedPivotMap; // Map of pivots
   basePhysicsRepresentation?: THREE.Mesh; // Base physics representation (not part of unmappedPivotMap)
   linkPhysicsMap: LinkPhysicsMap
+  visualPhysicsMap?: VisualPhysicsMap
 }
 
 /**
@@ -126,6 +154,7 @@ export abstract class Robot extends THREE.Object3D {
   public loader : URDFLoader | null;
   public basePhysicsRepresentation : any;
   public linkPhysicsMap : LinkPhysicsMap
+  public visualPhysicsMap : VisualPhysicsMap
 
   // all the objects "touched" by the grippers
   // if an object is simultaniously touched by both grippers, it can be lifted
@@ -143,6 +172,7 @@ export abstract class Robot extends THREE.Object3D {
     this.robot = null;
     this.loader = null;
     this.linkPhysicsMap = options.linkPhysicsMap
+    this.visualPhysicsMap = options.visualPhysicsMap || {}
     this.gripper_a_touched_objects = new Set()
     this.gripper_b_touched_objects = new Set()
     this.gripper_a = null
@@ -184,6 +214,11 @@ export abstract class Robot extends THREE.Object3D {
   async load(options: RobotLoaderOptions){
     const model = this.loadModel(options)
     await Robot.waitTillAllMeshesLoaded(this.robot, this.modelPath)
+
+    if(this.robot){
+      this.addPhysicsAndColorDefinitionsForObject(this.robot, options.enable3dPhysicsObject, this.linkPhysicsMap)
+      this.addPhysicsAndColorDefinitionsForVisuals(this.robot, options.enable3dPhysicsObject, this.visualPhysicsMap)
+    }
     return model
   }
 
@@ -214,6 +249,8 @@ export abstract class Robot extends THREE.Object3D {
     // Update the mapped joint limits in the pivots based on the loaded robot model
     if (robot.joints) {
       console.log("robot.joints", robot.joints)
+      console.log("robot.links", robot.links)
+      console.log("robot", robot)
       Object.values(this.pivotMap).forEach(pivot => {
         const joint = robot.joints?.[pivot.jointName];
         if (joint) {
@@ -246,8 +283,6 @@ export abstract class Robot extends THREE.Object3D {
 
     this._initializationStatus = "initialized"
     options.scene.add(robot)
-
-    this.addPhysicsAndColorDefinitionsForObject(robot, options.enable3dPhysicsObject, this.linkPhysicsMap)
     return robot
   }
 
@@ -287,23 +322,6 @@ export abstract class Robot extends THREE.Object3D {
     
     return false;
   }
-
-  static async checkAndSetMeshColorWithBackoff(
-    object: any,
-    color: THREE.Color,
-    robot: URDFRobot | null,
-    urdfPath: string,
-    maxWait: number = 3000,
-    interval: number = 100
-  ) {
-    const loaded = await Robot.waitTillAllMeshesLoaded(robot, urdfPath, maxWait, interval);
-    
-    if (loaded) {
-      Robot.setMeshColor(object, color);
-    } else {
-      console.warn("Meshes not fully loaded within timeout, color not set.");
-    }
-  } 
 
   /**
    * Parses URDF XML to find all mesh filenames referenced in the file
@@ -352,6 +370,97 @@ export abstract class Robot extends THREE.Object3D {
     }
     
     return count;
+  }
+
+  static computeObjectAxisLength(object: any, axis: VisualIKAxis): number {
+    if (!object) {
+      return 0;
+    }
+
+    const bbox = new THREE.Box3().setFromObject(object);
+    const size = new THREE.Vector3();
+    bbox.getSize(size);
+
+    if (axis === 'x') return size.x;
+    if (axis === 'y') return size.y;
+    return size.z;
+  }
+
+  static buildIKSegmentInfo(mesh: any, configs: VisualPhysicsIKConfig[]): VisualIKSegmentInfo[] {
+    const segments: VisualIKSegmentInfo[] = [];
+
+    for (const config of configs) {
+      const length = Robot.computeObjectAxisLength(mesh, config.axis);
+      console.log(`Visual IK axis length`, {
+        visual: mesh?.name,
+        jointName: config.jointName,
+        segment: config.segment,
+        axis: config.axis,
+        length
+      });
+      if (length > 0) {
+        segments.push({
+          ...config,
+          length: length * (config.direction ?? 1)
+        });
+      }
+    }
+
+    return segments;
+  }
+
+  static calculatePlanarIKEndPosition(
+    basePosition: THREE.Vector3,
+    segments: { length: number; angleRadians: number }[]
+  ): THREE.Vector3 {
+    let accumulatedAngle = 0;
+    const endPosition = basePosition.clone();
+
+    for (const segment of segments) {
+      accumulatedAngle += segment.angleRadians;
+      endPosition.x += segment.length * Math.cos(accumulatedAngle);
+      endPosition.y += segment.length * Math.sin(accumulatedAngle);
+    }
+
+    return endPosition;
+  }
+
+  static calculateIKEndEffectorPositionFromSegments(
+    basePosition: THREE.Vector3,
+    segmentInfos: VisualIKSegmentInfo[],
+    jointAngles: Record<string, number>
+  ): THREE.Vector3 {
+    const orderedSegments = [...segmentInfos].sort((a, b) => a.segment.localeCompare(b.segment));
+    const planarSegments = orderedSegments.map(info => ({
+      length: info.length,
+      angleRadians: jointAngles[info.jointName] ?? 0
+    }));
+
+    return Robot.calculatePlanarIKEndPosition(basePosition, planarSegments);
+  }
+
+  calculateVisualIKEndEffectorPosition(
+    visualName: string,
+    jointAngles: Record<string, number>,
+    basePosition: THREE.Vector3 = new THREE.Vector3()
+  ): THREE.Vector3 | null {
+    if (!this.robot || !this.robot.visual) {
+      return null;
+    }
+
+    const visual = this.robot.visual[visualName];
+    if (!visual) {
+      return null;
+    }
+
+    const mesh = Robot.findFirstMesh(visual);
+    const segmentInfos = mesh?.userData?.ikSegmentsInfo as VisualIKSegmentInfo[] | undefined;
+
+    if (!mesh || !segmentInfos || segmentInfos.length === 0) {
+      return null;
+    }
+
+    return Robot.calculateIKEndEffectorPositionFromSegments(basePosition, segmentInfos, jointAngles);
   }
 
   /**
@@ -421,9 +530,10 @@ export abstract class Robot extends THREE.Object3D {
           compoundBox.height = physicsAndColor.physicsMesh.geometry.parameters.height
           // @ts-expect-error because parameters does exist for...cubes, not sure why it isn't properly typed
           compoundBox.depth = physicsAndColor.physicsMesh.geometry.parameters.depth
-          compoundBox.x = physicsAndColor.physicsMesh.position.x
-          compoundBox.y = physicsAndColor.physicsMesh.position.y
-          compoundBox.z = physicsAndColor.physicsMesh.position.z
+          const offset = physicsAndColor.physicsOffset || {};
+          compoundBox.x = physicsAndColor.physicsMesh.position.x + (offset.x ?? 0)
+          compoundBox.y = physicsAndColor.physicsMesh.position.y + (offset.y ?? 0)
+          compoundBox.z = physicsAndColor.physicsMesh.position.z + (offset.z ?? 0)
         }
 
         if(physicsAndColor.color){
@@ -431,7 +541,7 @@ export abstract class Robot extends THREE.Object3D {
           // Checks if all meshes from URDF are loaded before applying the color.
           // Retries every 100ms (up to 3s by default) to handle async loading of meshes.
           // Falls back gracefully with a warning if meshes never appear.
-          Robot.checkAndSetMeshColorWithBackoff(link, physicsAndColor.color as THREE.Color, this.robot, this.modelPath);
+          Robot.setMeshColor(link, physicsAndColor.color as THREE.Color);
         }
 
         enable3dObj.add.existing(link, {compound : [compoundBox]})
@@ -486,6 +596,126 @@ export abstract class Robot extends THREE.Object3D {
               }
             }
           })
+        }
+      }
+    }
+  }
+
+  /**
+   * Gets the first child mesh of an object
+   * @param object - The object to check
+   * @returns The first child mesh, or null
+   */
+  static findFirstMesh(object: any): THREE.Mesh | null {
+    if (!object || !object.children || object.children.length === 0) return null;
+    
+    const firstChild = object.children[0];
+    return firstChild?.isMesh ? firstChild : null;
+  }
+
+  /**
+   * Traverses visuals and adds physics and color definitions
+   * Works with URDFVisual elements instead of URDFLink elements
+   */
+  addPhysicsAndColorDefinitionsForVisuals(robot : URDFRobot, enable3dObj : any, visualPhysicsMap : VisualPhysicsMap){
+    if (!robot.visual) return;
+    
+    for(const [visualName, visual] of Object.entries(robot.visual)){
+      if(visualPhysicsMap[visualName]){
+        const physicsAndColor = visualPhysicsMap[visualName];
+
+        console.log("visual found", visual)
+        
+        // Find the first mesh in the visual's children
+        const mesh = Robot.findFirstMesh(visual);
+        if (!mesh) {
+          console.warn(`No mesh found for visual: ${visualName}`);
+          continue;
+        }
+        
+        // Set color if specified
+        if(physicsAndColor.color){
+          Robot.setMeshColor(mesh, physicsAndColor.color as THREE.Color, this.robot, this.modelPath);
+        }
+
+        if(physicsAndColor.ikSegment){
+          const ikSegmentInfos = Robot.buildIKSegmentInfo(mesh, [physicsAndColor.ikSegment]);
+          mesh.userData = mesh.userData || {};
+          mesh.userData.ikSegmentsInfo = ikSegmentInfos;
+        }
+        
+        // Add physics
+        // Clone the mesh, translate it, and apply physics to the clone
+        const meshClone = mesh.clone();
+        const offset = physicsAndColor.physicsOffset || {};
+        
+        if(physicsAndColor.physicsMesh){
+          // Use compound box with specified physics mesh
+          const physicsMesh = physicsAndColor.physicsMesh;
+          
+          // @ts-expect-error because parameters does exist for cubes, not sure why it isn't properly typed
+          const width = physicsMesh.geometry.parameters.width;
+          // @ts-expect-error because parameters does exist for cubes, not sure why it isn't properly typed
+          const height = physicsMesh.geometry.parameters.height;
+          // @ts-expect-error because parameters does exist for cubes, not sure why it isn't properly typed
+          const depth = physicsMesh.geometry.parameters.depth;
+          
+          // Position clone with offset adjustments
+          meshClone.position.set(
+            (offset.x ?? 0) - width / 2,
+            (offset.y ?? 0) - height / 2,
+            (offset.z ?? 0) - depth / 2
+          );
+          
+          const compoundBox = {
+            shape: 'box',
+            width,
+            height,
+            depth,
+            x: 0,
+            y: 0,
+            z: 0
+          };
+          
+          meshClone.visible = false;
+          mesh.add(meshClone);
+          enable3dObj.add.existing(meshClone, {compound : [compoundBox]});
+          
+          // Set collision flags
+          const body = (meshClone as unknown as ExtendedMesh).body;
+          if (body) {
+            body.setCollisionFlags(2);
+          }
+        } else {
+          const bbox = new THREE.Box3().setFromObject(mesh);
+          const size = new THREE.Vector3();
+          bbox.getSize(size);
+          
+          // Position clone with offset adjustments
+          meshClone.position.set(
+            (offset.x ?? 0),
+            (offset.y ?? 0),
+            (offset.z ?? 0)
+          );
+          
+          const boxShape = { 
+            width: size.x, 
+            height: size.y, 
+            depth: size.z, 
+            x: 0,
+            y: 0,
+            z: 0
+          }
+
+          meshClone.visible = false;
+          mesh.add(meshClone);
+          enable3dObj.add.existing(meshClone, { addChildren: false, shape : 'box', ...boxShape });
+          
+          // Set collision flags
+          const body = (meshClone as unknown as ExtendedMesh).body;
+          if (body) {
+            body.setCollisionFlags(2);
+          }
         }
       }
     }
@@ -556,6 +786,30 @@ export abstract class Robot extends THREE.Object3D {
     }
   }
 
+  static markVisualsAsNeedingPhysicsUpdate(obj : URDFRobot){
+    if(!obj.visual) return;
+    
+    for(const [_, visual] of Object.entries(obj.visual)){
+      const mesh = Robot.findFirstMesh(visual);
+      // @ts-expect-error enable3dObj.add.existing adds the body property to the mesh
+      if(mesh?.body){
+        // @ts-expect-error enable3dObj.add.existing adds the body property to the mesh
+        mesh.body.needUpdate = true;
+      }
+      
+      // Check children for physics bodies (cloned meshes with physics)
+      if(mesh?.children){
+        for(const child of mesh.children){
+          // @ts-expect-error enable3dObj.add.existing adds the body property to the child
+          if(child.body){
+            // @ts-expect-error enable3dObj.add.existing adds the body property to the child
+            child.body.needUpdate = true;
+          }
+        }
+      }
+    }
+  }
+
   /**
    * set the joint value for the urdf robot
    */
@@ -578,6 +832,7 @@ export abstract class Robot extends THREE.Object3D {
       pivot.physicsRepresentation.currentRotation = values[0];
 
     Robot.markLinksAsNeedingPhysicsUpdate(this.robot)
+    Robot.markVisualsAsNeedingPhysicsUpdate(this.robot)
     this.updateGrippedObjectPositions()
 
     return this.robot.setJointValue(name, ...values)

@@ -1,5 +1,5 @@
 import { ExtendedMesh } from 'enable3d';
-import { Robot, UnmappedPivotMap } from './Robot';
+import { Robot, UnmappedPivotMap, VisualPhysicsMap } from './Robot';
 import { SO101 } from './SO101';
 import * as THREE from 'three';
 
@@ -140,6 +140,47 @@ export class LeKiwi extends Robot {
         color: new THREE.Color(0x00ee00)
       }
     }
+
+    // Example visualPhysicsMap - uses mesh itself for physics (no physicsMesh specified)
+    const visualPhysicsMap: VisualPhysicsMap = {
+      'SO_ARM100_08k_116_Square-v1_visual': {
+        color: new THREE.Color(0xff0000),
+        ikSegment: {
+          jointName: 'STS3215_03a-v1-1_Revolute-49',
+          segment: 'ik1',
+          axis: 'y'
+        },
+        physicsOffset: { x: 0, y: 12, z: 0 }
+      },
+      'SO_ARM100_08k_Mirror-v1_visual': {
+        color: new THREE.Color(0x00ffff),
+        ikSegment: {
+          jointName: 'STS3215_03a-v1-2_Revolute-51',
+          segment: 'ik2',
+          axis: 'y'
+        },
+        physicsOffset: { x: 0, y: -35, z: 0 }
+      },
+      'Moving_Jaw_08d-v1_visual': {
+        color: new THREE.Color(0x00ffff),
+        ikSegment: {
+          jointName: 'STS3215_03a-v1-2_Revolute-51',
+          segment: 'ik2',
+          axis: 'y'
+        },
+        physicsOffset: { x: 0, y: -35, z: 0 }
+      },
+      'Wrist_Roll_08c-v1_visual': {
+        color: new THREE.Color(0x00ffff),
+        ikSegment: {
+          jointName: 'STS3215_03a-v1-2_Revolute-51',
+          segment: 'ik2',
+          axis: 'y'
+        },
+        physicsOffset: { x: 0, y: 0, z: 55 }
+      }
+    }
+
     // Call super with options object
     super({
       name: "LeKiwi",
@@ -148,7 +189,8 @@ export class LeKiwi extends Robot {
       modelPath: window.location.origin + "/urdf/lekiwi/LeKiwi.urdf", 
       unmappedPivotMap,
       basePhysicsRepresentation,
-      linkPhysicsMap
+      linkPhysicsMap : {},
+      visualPhysicsMap
     });
   }
 }

@@ -454,7 +454,7 @@ export const createMainScene = async ({
   // Helper to clear and rebuild sliders for the active robot
   const DEFAULT_POSES: Record<'lekiwi' | 'so101', { position: { x: number; y: number; z: number }; rotationDegrees: number }> = {
     lekiwi: {
-      position: { x: -1.23, y: 1, z: -2.23 },
+      position: { x: -5, y: 1, z: -2.23 },
       rotationDegrees: -115.5,
     },
     so101: {
@@ -469,6 +469,7 @@ export const createMainScene = async ({
     robot.robot.position.set(pose.position.x, pose.position.y, pose.position.z)
     robot.robot.rotation.z = THREE.MathUtils.degToRad(pose.rotationDegrees)
     Robot.markLinksAsNeedingPhysicsUpdate(robot.robot)
+    Robot.markVisualsAsNeedingPhysicsUpdate(robot.robot)
     robot.updateGrippedObjectPositions()
   }
 
